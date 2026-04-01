@@ -202,6 +202,8 @@ Pre-commit hooks run ESLint and Prettier automatically on staged files.
 
 Built by [Mobile Locker](https://mobilelocker.com) — [support@mobilelocker.com](mailto:support@mobilelocker.com)
 
+Mobile Locker is a content management and engagement platform for the life sciences industry. We help pharmaceutical, medical device, and diagnostics companies deliver personalized content to healthcare professionals — with down-to-the-page analytics, CRM integrations (Salesforce, Veeva), and AI-powered recommendations built for regulated environments.
+
 ## License
 
 [MIT](LICENSE)
