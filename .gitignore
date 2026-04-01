@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Internal docs (scraped API reference + implementation plan — not for public release)
+docs/
+
+# Build output
+dist/
+*.tar.gz
+
+# OAuth token cache (written at runtime, contains bearer tokens)
+.helpscout_token.json
+
+# macOS
+.DS_Store
+
+# JetBrains IDEs
+.idea/
+
+# VS Code
+.vscode/
+
+# Playwright MCP scraping artifacts
+.playwright-mcp/
+
+# Logs
+*.log
+npm-debug.log*

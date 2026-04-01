@@ -1,0 +1,49 @@
+{
+  "name": "helpscout-cli",
+  "version": "1.0.0",
+  "description": "Help Scout CLI for Mailbox API v2 and Docs API v1",
+  "author": "Mobile Locker <support@mobilelocker.com>",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "helpscout": "./bin/helpscout.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=1",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "simple-git-hooks",
+    "build": "mkdir -p dist && echo '{\"type\":\"commonjs\"}' > dist/package.json && esbuild bin/helpscout.js --bundle --platform=node --format=cjs --outfile=dist/helpscout && chmod +x dist/helpscout && esbuild bin/helpscout-mcp.js --bundle --platform=node --format=cjs --outfile=dist/helpscout-mcp && chmod +x dist/helpscout-mcp",
+    "install:bin": "npm run build && cp dist/helpscout /usr/local/bin/helpscout && cp dist/helpscout-mcp /usr/local/bin/helpscout-mcp"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "npx lint-staged"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": "prettier --write"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "cli-table3": "^0.6.3",
+    "commander": "^12.0.0",
+    "zod": "~4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "esbuild": "^0.27.4",
+    "eslint": "^10.1.0",
+    "eslint-config-prettier": "^10.1.8",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1",
+    "simple-git-hooks": "^2.13.1"
+  }
+}
