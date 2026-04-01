@@ -10,6 +10,18 @@ import { login, logout, status } from './auth.js';
 import { mailbox } from './mailbox-client.js';
 import { docs } from './docs-client.js';
 
+// 26 tools:
+//   Auth (3):         auth_status, auth_login, auth_logout
+//   Conversations (5): list_conversations, get_conversation, create_conversation,
+//                      update_conversation, delete_conversation
+//   Threads (3):      list_threads, reply_to_conversation, add_note
+//   Customers (4):    list_customers, get_customer, create_customer, update_customer
+//   Mailboxes (1):    list_mailboxes
+//   Users (3):        list_users, get_current_user (get_user via list)
+//   Tags (1):         list_tags
+//   Articles (6):     list_articles, get_article, search_articles, create_article,
+//                     update_article, delete_article
+//   Collections (2):  list_collections, get_collection
 const server = new McpServer({ name: 'helpscout', version: '1.0.0' });
 
 function ok(data) {

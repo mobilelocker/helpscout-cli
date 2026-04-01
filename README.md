@@ -14,7 +14,7 @@ Designed for scripting, automation, and use by AI agents. Ships with an MCP serv
 ## Installation
 
 ```sh
-git clone <repo-url> helpscout-cli
+git clone https://github.com/mobilelocker/helpscout-cli.git helpscout-cli
 cd helpscout-cli
 ./install.sh
 ```
@@ -24,7 +24,7 @@ cd helpscout-cli
 ### Development (run from source)
 
 ```sh
-git clone <repo-url> helpscout-cli
+git clone https://github.com/mobilelocker/helpscout-cli.git helpscout-cli
 cd helpscout-cli
 npm install
 node bin/helpscout.js <command>
