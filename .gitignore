@@ -2,7 +2,7 @@
 node_modules/
 
 # Internal docs (scraped API reference + implementation plan — not for public release)
-docs/
+/docs/
 
 # Build output
 dist/
