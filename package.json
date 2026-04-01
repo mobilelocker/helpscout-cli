@@ -9,7 +9,7 @@
     "helpscout": "./bin/helpscout.js"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "test": "node --test --test-concurrency=1",
@@ -34,7 +34,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "cli-table3": "^0.6.3",
-    "commander": "^12.0.0",
+    "commander": "^14.0.3",
     "zod": "~4.3.6"
   },
   "devDependencies": {

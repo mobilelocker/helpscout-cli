@@ -6,7 +6,7 @@ Designed for scripting, automation, and use by AI agents. Ships with an MCP serv
 
 ## Prerequisites
 
-- Node.js 18 or later
+- Node.js 20 or later
 - A Help Scout account with:
   - An OAuth application (for Mailbox API) — create one at **Your Profile → My Apps**
   - An API key (for Docs API) — create one at **Your Profile → API Keys**
