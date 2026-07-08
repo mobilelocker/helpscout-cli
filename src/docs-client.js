@@ -70,7 +70,11 @@ async function request(method, path, { body, params } = {}) {
       throw Object.assign(new Error(message), { status: res.status });
     }
 
-    return res.json();
+    // Docs API returns 200/201 with an empty body (no JSON payload, just a
+    // Location header) for some write endpoints, e.g. POST/PUT /articles.
+    const text = await res.text();
+    if (!text.trim()) return null;
+    return JSON.parse(text);
   }
 
   throw new Error('Exceeded maximum retries due to rate limiting.');

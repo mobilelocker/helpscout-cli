@@ -4,6 +4,7 @@
  * Mailbox API v2 (helpscout inbox ...) and Docs API v1 (helpscout docs ...)
  */
 import { Command } from 'commander';
+import pkg from '../package.json' with { type: 'json' };
 import { makeAuthCommand } from '../src/commands/auth.js';
 import { makeConversationCommand } from '../src/commands/inbox/conversations.js';
 import { makeThreadCommand } from '../src/commands/inbox/threads.js';
@@ -20,7 +21,7 @@ const program = new Command();
 program
   .name('helpscout')
   .description('Help Scout CLI — Mailbox API v2 and Docs API v1')
-  .version('1.0.0')
+  .version(pkg.version)
   // Global output format flags — inherited by all subcommands via optsWithGlobals()
   .option('--json', 'Force JSON output (default when stdout is not a TTY)')
   .option('--pretty', 'Force pretty/table output (default when stdout is a TTY)')

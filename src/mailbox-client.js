@@ -67,7 +67,11 @@ async function request(method, path, { body, params } = {}) {
       throw Object.assign(new Error(message), { status: res.status });
     }
 
-    return res.json();
+    // Defensive: some endpoints may return a 200/201 with an empty body
+    // rather than 204, which would otherwise throw on JSON parsing.
+    const text = await res.text();
+    if (!text.trim()) return null;
+    return JSON.parse(text);
   }
 
   throw new Error('Exceeded maximum retries due to rate limiting.');

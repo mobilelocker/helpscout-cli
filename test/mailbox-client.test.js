@@ -114,6 +114,12 @@ test('mailbox.get retries once on 401 by refreshing the token', async () => {
           refresh_token: 'new-refresh',
           expires_in: 172800,
         }),
+        text: async () =>
+          JSON.stringify({
+            access_token: 'refreshed-token',
+            refresh_token: 'new-refresh',
+            expires_in: 172800,
+          }),
       };
     }
     const resp = fetchCallCount === 1 ? unauthorizedResponse : successResponse;
@@ -141,6 +147,7 @@ test('mailbox requests include correct User-Agent header', async () => {
       status: 200,
       headers: { get: () => null },
       json: async () => ({}),
+      text: async () => '{}',
     };
   });
 

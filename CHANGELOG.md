@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.1] — 2026-07-08
+
+### Fixed
+
+- Crash on write endpoints (e.g. Docs `POST/PUT /articles`) that return a 200/201 with an empty body instead of JSON — `request()` in both `docs-client.js` and `mailbox-client.js` now safely returns `null` for empty responses instead of throwing on JSON parsing
+
 ## [1.0.0] — 2026-04-01
 
 ### Added

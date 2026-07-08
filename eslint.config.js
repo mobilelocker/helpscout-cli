@@ -6,7 +6,7 @@ export default [
   prettierConfig,
   {
     languageOptions: {
-      ecmaVersion: 2022,
+      ecmaVersion: 'latest',
       sourceType: 'module',
       globals: {
         // Node.js globals

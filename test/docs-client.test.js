@@ -67,6 +67,7 @@ test('docs.get sends correct Basic Auth header', async () => {
       status: 200,
       headers: { get: () => null },
       json: async () => ({}),
+      text: async () => '{}',
     };
   });
   process.env.HELPSCOUT_API_KEY = 'mykey';
