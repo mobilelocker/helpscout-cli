@@ -50,8 +50,12 @@ export function makeWebhookCommand() {
     .requiredOption('--secret <secret>', 'Signing secret')
     .option(
       '--events <events>',
-      'Comma-separated event list (e.g. convo.created,convo.updated)',
+      'Comma-separated event list (e.g. convo.created,convo.updated,user.status.changed)',
       'convo.created,convo.updated,convo.deleted',
+    )
+    .option(
+      '--payload-version <version>',
+      'Webhook payload version: v2 (default) or v3 (preserves system_user type)',
     )
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
@@ -60,6 +64,7 @@ export function makeWebhookCommand() {
         secret: opts.secret,
         events: opts.events.split(',').map((s) => s.trim()),
       };
+      if (opts.payloadVersion) body.payloadVersion = opts.payloadVersion.toUpperCase();
       const data = await mailbox.post('/webhooks', body);
       output(data ?? { ok: true }, globalOpts);
     });

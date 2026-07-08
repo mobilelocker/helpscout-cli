@@ -139,6 +139,10 @@ helpscout inbox customer update <id> --phone "+15555550100"
 helpscout inbox user me                        # who am I?
 helpscout inbox user list                      # all users
 helpscout inbox mailbox list                   # all mailboxes with their IDs
+
+helpscout inbox user status get <id>           # email + chat status for a user
+helpscout inbox user status list               # statuses for all users
+helpscout inbox user status set <id> --status active --text "On a call" --emoji 📞
 ```
 
 ### Tags
@@ -154,7 +158,8 @@ helpscout inbox webhook list
 helpscout inbox webhook create \
   --url https://example.com/hook \
   --secret mysecret \
-  --events convo.created,convo.assigned
+  --events convo.created,convo.assigned \
+  --payload-version v3   # opt into V3 payloads (preserves system_user type)
 helpscout inbox webhook delete <id>
 ```
 

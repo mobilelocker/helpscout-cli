@@ -7,22 +7,25 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 import { login, logout, status } from './auth.js';
-import { mailbox } from './mailbox-client.js';
+import { mailbox, buildCustomStatus } from './mailbox-client.js';
 import { docs } from './docs-client.js';
+import { USER_STATUS_COLUMNS } from './columns.js';
+import pkg from '../package.json' with { type: 'json' };
 
-// 26 tools:
+// 29 tools:
 //   Auth (3):         auth_status, auth_login, auth_logout
 //   Conversations (5): list_conversations, get_conversation, create_conversation,
 //                      update_conversation, delete_conversation
 //   Threads (3):      list_threads, reply_to_conversation, add_note
 //   Customers (4):    list_customers, get_customer, create_customer, update_customer
 //   Mailboxes (1):    list_mailboxes
-//   Users (3):        list_users, get_current_user (get_user via list)
+//   Users (5):        list_users, get_current_user (get_user via list), get_user_status,
+//                     list_user_statuses, set_user_status
 //   Tags (1):         list_tags
 //   Articles (6):     list_articles, get_article, search_articles, create_article,
 //                     update_article, delete_article
 //   Collections (2):  list_collections, get_collection
-const server = new McpServer({ name: 'helpscout', version: '1.0.0' });
+const server = new McpServer({ name: 'helpscout', version: pkg.version });
 
 function ok(data) {
   return { content: [{ type: 'text', text: JSON.stringify(data) }] };
@@ -526,6 +529,74 @@ server.registerTool(
   async () => {
     try {
       return ok(await mailbox.get('/users/me'));
+    } catch (e) {
+      return fail(e);
+    }
+  },
+);
+
+server.registerTool(
+  'get_user_status',
+  {
+    description: 'Get email (routing) and chat status for a single user.',
+    inputSchema: {
+      id: z.number().describe('User ID'),
+    },
+  },
+  async ({ id }) => {
+    try {
+      return ok(await mailbox.get(`/users/${id}/status`));
+    } catch (e) {
+      return fail(e);
+    }
+  },
+);
+
+server.registerTool(
+  'list_user_statuses',
+  {
+    description: 'List email (routing) and chat statuses for all users.',
+    inputSchema: {
+      all: z.boolean().optional().describe('Fetch all pages'),
+      markdown: z.boolean().optional().describe('Return a Markdown table instead of JSON'),
+    },
+  },
+  async ({ all, markdown }) => {
+    try {
+      const rows = all
+        ? await mailbox.getAll('/users/status', 'userStatuses')
+        : ((await mailbox.get('/users/status'))?._embedded?.userStatuses ?? []);
+      if (markdown) {
+        return okMarkdown(rows, USER_STATUS_COLUMNS);
+      }
+      return ok(rows);
+    } catch (e) {
+      return fail(e);
+    }
+  },
+);
+
+server.registerTool(
+  'set_user_status',
+  {
+    description:
+      "Set a user's email (routing) status. Admins/owners can set status for other users; " +
+      'non-admins may only set their own.',
+    inputSchema: {
+      id: z.number().describe('User ID'),
+      status: z.enum(['active', 'away']).describe('Status to set'),
+      text: z.string().optional().describe('Custom status text'),
+      emoji: z.string().optional().describe('Custom status emoji, e.g. ☕'),
+      emojiName: z.string().optional().describe('Custom status emoji name, e.g. :coffee:'),
+    },
+  },
+  async ({ id, status, text, emoji, emojiName }) => {
+    try {
+      const body = { status };
+      const customStatus = buildCustomStatus({ text, emoji, emojiName });
+      if (customStatus) body.customStatus = customStatus;
+      await mailbox.put(`/users/${id}/status`, body);
+      return ok({ ok: true, id });
     } catch (e) {
       return fail(e);
     }

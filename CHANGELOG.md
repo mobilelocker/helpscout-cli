@@ -1,10 +1,24 @@
 # Changelog
 
-## [1.0.1] — 2026-07-08
+## [1.1.0] — 2026-07-08
+
+### Added
+
+- `helpscout inbox webhook create --payload-version <v2|v3>` — opt into Mailbox API V3 webhook payloads, which preserve the `system_user` type on conversation data so AI agents can be distinguished from regular users (V2 remains the default)
+- User status support, matching the Mailbox API's Set/Get/List User Status endpoints:
+  - CLI: `helpscout inbox user status get <id>`, `helpscout inbox user status list [--all]`, `helpscout inbox user status set <id> --status <active|away> [--text] [--emoji] [--emoji-name]`
+  - MCP tools: `get_user_status`, `list_user_statuses`, `set_user_status` (29 MCP tools total, up from 26)
 
 ### Fixed
 
 - Crash on write endpoints (e.g. Docs `POST/PUT /articles`) that return a 200/201 with an empty body instead of JSON — `request()` in both `docs-client.js` and `mailbox-client.js` now safely returns `null` for empty responses instead of throwing on JSON parsing
+- MCP tools `create_article`, `update_article`, `create_conversation`, and `create_customer` now handle the empty-body case above correctly instead of returning `"null"` to the calling agent
+- `helpscout --version` and the MCP server's reported version now read from `package.json` instead of a hardcoded string
+- Raised minimum Node version to `>=20.10.0` (previously `>=20.0.0`), which is what's actually required by JSON import attribute syntax already in use
+
+### Changed
+
+- Extracted shared `USER_AGENT` and `parseJsonBody()` helpers (`src/http.js`) out of duplicated logic in `mailbox-client.js` and `docs-client.js`
 
 ## [1.0.0] — 2026-04-01
 

@@ -80,6 +80,24 @@ function sleep(ms) {
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
+export const USER_STATUSES = ['active', 'away'];
+
+/**
+ * Build the customStatus object for the Set User Status endpoint.
+ * The Mailbox API requires `text` whenever customStatus is present, so emoji
+ * or emojiName without text is rejected here rather than by the live API.
+ */
+export function buildCustomStatus({ text, emoji, emojiName } = {}) {
+  if (!text && !emoji && !emojiName) return undefined;
+  if (!text) {
+    throw new Error('customStatus requires text (emoji/emojiName need accompanying text)');
+  }
+  const customStatus = { text };
+  if (emoji) customStatus.emoji = emoji;
+  if (emojiName) customStatus.emojiName = emojiName;
+  return customStatus;
+}
+
 export const mailbox = {
   /**
    * GET a single page. Returns raw API response.

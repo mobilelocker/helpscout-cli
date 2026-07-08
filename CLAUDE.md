@@ -21,13 +21,13 @@ Add to your project's `.mcp.json`:
 }
 ```
 
-The MCP server exposes 26 tools covering all operations below. Use the MCP tools directly instead of shelling out to the CLI when available.
+The MCP server exposes 29 tools covering all operations below. Use the MCP tools directly instead of shelling out to the CLI when available.
 
 ## MCP Tools
 
-`auth_status`, `auth_login`, `auth_logout`, `list_conversations`, `get_conversation`, `create_conversation`, `update_conversation`, `delete_conversation`, `list_threads`, `reply_to_conversation`, `add_note`, `list_customers`, `get_customer`, `create_customer`, `update_customer`, `list_mailboxes`, `list_users`, `get_current_user`, `list_tags`, `list_articles`, `get_article`, `search_articles`, `create_article`, `update_article`, `delete_article`, `list_collections`, `get_collection`
+`auth_status`, `auth_login`, `auth_logout`, `list_conversations`, `get_conversation`, `create_conversation`, `update_conversation`, `delete_conversation`, `list_threads`, `reply_to_conversation`, `add_note`, `list_customers`, `get_customer`, `create_customer`, `update_customer`, `list_mailboxes`, `list_users`, `get_current_user`, `get_user_status`, `list_user_statuses`, `set_user_status`, `list_tags`, `list_articles`, `get_article`, `search_articles`, `create_article`, `update_article`, `delete_article`, `list_collections`, `get_collection`
 
-All list tools (`list_conversations`, `list_threads`, `list_customers`, `list_mailboxes`, `list_users`, `list_tags`, `list_articles`, `search_articles`, `list_collections`) accept an optional `markdown: true` parameter to return a GitHub Flavored Markdown table instead of JSON — useful when displaying results directly to a user in the conversation.
+All list tools (`list_conversations`, `list_threads`, `list_customers`, `list_mailboxes`, `list_users`, `list_user_statuses`, `list_tags`, `list_articles`, `search_articles`, `list_collections`) accept an optional `markdown: true` parameter to return a GitHub Flavored Markdown table instead of JSON — useful when displaying results directly to a user in the conversation.
 
 ## Environment Variables
 
@@ -177,6 +177,15 @@ helpscout inbox mailbox get <id>
 helpscout inbox user list [--mailbox <id>] [--all]
 helpscout inbox user get <id>
 helpscout inbox user me
+
+helpscout inbox user status get <id>
+helpscout inbox user status list [--all]
+
+helpscout inbox user status set <id> [options]
+  --status <status>     (required) active | away
+  --text <text>         custom status text
+  --emoji <emoji>       custom status emoji, e.g. ☕
+  --emoji-name <name>   custom status emoji name, e.g. :coffee:
 ```
 
 ### Inbox — Tags
@@ -192,9 +201,10 @@ helpscout inbox webhook list
 helpscout inbox webhook get <id>
 
 helpscout inbox webhook create [options]
-  --url <url>        (required)
-  --secret <secret>  (required)
-  --events <list>    comma-separated (default: convo.created,convo.updated,convo.deleted)
+  --url <url>               (required)
+  --secret <secret>         (required)
+  --events <list>           comma-separated (default: convo.created,convo.updated,convo.deleted)
+  --payload-version <ver>   v2 (default) | v3 (preserves system_user type)
 
 helpscout inbox webhook delete <id>
 ```
