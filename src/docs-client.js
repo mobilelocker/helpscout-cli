@@ -5,6 +5,7 @@
  * Rate limiting: X-RateLimit-Reset (Unix timestamp for reset), 429 on limit
  * Pagination: { page, pages, count, items } envelope
  */
+import { USER_AGENT, parseJsonBody } from './http.js';
 
 const BASE_URL = 'https://docsapi.helpscout.net/v1';
 const MAX_RETRIES = 3;
@@ -38,7 +39,7 @@ async function request(method, path, { body, params } = {}) {
         Authorization: buildBasicAuth(apiKey),
         'Content-Type': 'application/json',
         Accept: 'application/json',
-        'User-Agent': 'helpscout-cli/1.0.0',
+        'User-Agent': USER_AGENT,
       },
     };
 
@@ -70,11 +71,7 @@ async function request(method, path, { body, params } = {}) {
       throw Object.assign(new Error(message), { status: res.status });
     }
 
-    // Docs API returns 200/201 with an empty body (no JSON payload, just a
-    // Location header) for some write endpoints, e.g. POST/PUT /articles.
-    const text = await res.text();
-    if (!text.trim()) return null;
-    return JSON.parse(text);
+    return parseJsonBody(res);
   }
 
   throw new Error('Exceeded maximum retries due to rate limiting.');

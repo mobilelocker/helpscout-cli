@@ -201,7 +201,8 @@ server.registerTool(
       if (body) payload.threads = [{ type: 'customer', body }];
       if (tags) payload.tags = tags;
       if (assignedTo) payload.assignTo = assignedTo;
-      return ok(await mailbox.post('/conversations', payload));
+      const data = await mailbox.post('/conversations', payload);
+      return ok(data ?? { ok: true });
     } catch (e) {
       return fail(e);
     }
@@ -421,7 +422,8 @@ server.registerTool(
       if (firstName) body.firstName = firstName;
       if (lastName) body.lastName = lastName;
       if (phone) body.phones = [{ value: phone, type: 'work' }];
-      return ok(await mailbox.post('/customers', body));
+      const data = await mailbox.post('/customers', body);
+      return ok(data ?? { ok: true });
     } catch (e) {
       return fail(e);
     }
@@ -670,7 +672,8 @@ server.registerTool(
     try {
       const body = { collectionId, name, status: status ?? 'notpublished' };
       if (text) body.text = text;
-      return ok(await docs.post('/articles', body));
+      const data = await docs.post('/articles', body);
+      return ok(data?.article ?? data ?? { ok: true });
     } catch (e) {
       return fail(e);
     }
@@ -694,7 +697,8 @@ server.registerTool(
       if (name) body.name = name;
       if (text) body.text = text;
       if (status) body.status = status;
-      return ok(await docs.put(`/articles/${id}`, body));
+      const data = await docs.put(`/articles/${id}`, body);
+      return ok(data?.article ?? { ok: true, id });
     } catch (e) {
       return fail(e);
     }

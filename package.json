@@ -9,7 +9,7 @@
     "helpscout": "./bin/helpscout.js"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.10.0"
   },
   "scripts": {
     "test": "node --test --test-concurrency=1",

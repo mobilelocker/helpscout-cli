@@ -59,22 +59,13 @@ test('docs.get handles 429 and waits for reset', async () => {
 });
 
 test('docs.get sends correct Basic Auth header', async () => {
-  let capturedAuth = null;
-  globalThis.fetch = mock.fn(async (url, opts) => {
-    capturedAuth = opts.headers.Authorization;
-    return {
-      ok: true,
-      status: 200,
-      headers: { get: () => null },
-      json: async () => ({}),
-      text: async () => '{}',
-    };
-  });
+  const fetchStub = makeFetchStub([{ body: {} }]);
+  globalThis.fetch = fetchStub;
   process.env.HELPSCOUT_API_KEY = 'mykey';
 
   const { docs } = await import('../src/docs-client.js');
   await docs.get('/articles');
 
   const expected = 'Basic ' + Buffer.from('mykey:X').toString('base64');
-  assert.equal(capturedAuth, expected);
+  assert.equal(fetchStub.mock.calls[0].arguments[1].headers.Authorization, expected);
 });

@@ -139,19 +139,11 @@ test('mailbox.get retries once on 401 by refreshing the token', async () => {
 });
 
 test('mailbox requests include correct User-Agent header', async () => {
-  let capturedUserAgent = null;
-  globalThis.fetch = mock.fn(async (url, opts) => {
-    capturedUserAgent = opts.headers['User-Agent'];
-    return {
-      ok: true,
-      status: 200,
-      headers: { get: () => null },
-      json: async () => ({}),
-      text: async () => '{}',
-    };
-  });
+  const fetchStub = makeFetchStub([{ body: {} }]);
+  globalThis.fetch = fetchStub;
 
   const { mailbox } = await import('../src/mailbox-client.js');
+  const { USER_AGENT } = await import('../src/http.js');
   await mailbox.get('/conversations');
-  assert.equal(capturedUserAgent, 'helpscout-cli/1.0.0');
+  assert.equal(fetchStub.mock.calls[0].arguments[1].headers['User-Agent'], USER_AGENT);
 });
