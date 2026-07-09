@@ -259,6 +259,7 @@ helpscout docs article create [options]
 
 helpscout docs article upload --collection <id> --file <path> [--name] [--category] [--slug] [--type html|text|markdown] [--reload]
 helpscout docs article update <id> [--name] [--text] [--status] [--slug] [--category <id...>] [--related <id...>] [--keyword <word...>] [--clear-categories] [--clear-related] [--clear-keywords] [--reload]
+  categories on update: omit = unchanged; --clear-categories or null = Uncategorized; --category ids = replace (never pass Uncategorized id)
 helpscout docs article update-view-count <id>
 helpscout docs article save-draft <id>
 helpscout docs article delete-draft <id>

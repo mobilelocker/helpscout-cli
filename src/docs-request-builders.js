@@ -26,6 +26,22 @@ function applyNullableArray(body, key, value, clear) {
   else if (value !== undefined) body[key] = value;
 }
 
+/**
+ * Update Article categories semantics (Docs API):
+ * - omit: existing categories unchanged
+ * - null: move to Uncategorized (do not pass Uncategorized's id in an array)
+ * - non-empty array: article belongs only to those categories
+ * - empty array: normalized to null (Uncategorized)
+ */
+function applyArticleCategoriesUpdate(body, categories, clearCategories) {
+  if (clearCategories || categories === null) {
+    body.categories = null;
+    return;
+  }
+  if (categories === undefined) return;
+  body.categories = categories.length === 0 ? null : categories;
+}
+
 export function buildArticleCreateBody(input) {
   const body = {
     collectionId: input.collectionId,
@@ -46,7 +62,7 @@ export function buildArticleUpdateBody(input) {
   applyOptional(body, 'text', input.text);
   applyOptional(body, 'status', input.status);
   applyOptional(body, 'slug', input.slug);
-  applyNullableArray(body, 'categories', input.categories, input.clearCategories);
+  applyArticleCategoriesUpdate(body, input.categories, input.clearCategories);
   applyNullableArray(body, 'related', input.related, input.clearRelated);
   applyNullableArray(body, 'keywords', input.keywords, input.clearKeywords);
   return body;

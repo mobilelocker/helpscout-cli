@@ -45,6 +45,27 @@ test('buildArticleUpdateBody supports null clears', () => {
   assert.equal(body.related, undefined);
 });
 
+test('buildArticleUpdateBody omits categories when unset', () => {
+  const body = buildArticleUpdateBody({ name: 'New' });
+  assert.equal(body.name, 'New');
+  assert.equal('categories' in body, false);
+});
+
+test('buildArticleUpdateBody accepts explicit categories null', () => {
+  const body = buildArticleUpdateBody({ categories: null });
+  assert.equal(body.categories, null);
+});
+
+test('buildArticleUpdateBody normalizes empty categories array to null', () => {
+  const body = buildArticleUpdateBody({ categories: [] });
+  assert.equal(body.categories, null);
+});
+
+test('buildArticleUpdateBody replaces categories with id array', () => {
+  const body = buildArticleUpdateBody({ categories: ['cat-a', 'cat-b'] });
+  assert.deepEqual(body.categories, ['cat-a', 'cat-b']);
+});
+
 test('buildSiteCreateBody collects site fields', () => {
   const body = buildSiteCreateBody({
     title: 'Docs',

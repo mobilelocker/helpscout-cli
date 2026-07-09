@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { normalizeWriteResponse } from './http.js';
 import {
   articleListQueryFields,
+  articleUpdateCategoriesField,
   categoryListQueryFields,
   collectionListQueryFields,
   nullableStringArray,
@@ -316,17 +317,21 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
   server.registerTool(
     'update_article',
     {
-      description: 'Update an existing Help Scout Docs article.',
+      description:
+        'Update an existing Help Scout Docs article. For categories: omit to leave unchanged, pass null or clearCategories to move to Uncategorized, or pass category id array to replace. Do not include the Uncategorized category id in the array.',
       inputSchema: {
         id: z.string(),
         name: z.string().optional(),
         text: z.string().optional(),
         status: z.enum(['published', 'notpublished']).optional(),
         slug: z.string().optional(),
-        categories: nullableStringArray(),
+        categories: articleUpdateCategoriesField(),
         related: nullableStringArray(),
         keywords: nullableStringArray(),
-        clearCategories: z.boolean().optional().describe('Clear all categories'),
+        clearCategories: z
+          .boolean()
+          .optional()
+          .describe('Same as categories: null — move article to Uncategorized'),
         clearRelated: z.boolean().optional().describe('Clear related articles'),
         clearKeywords: z.boolean().optional().describe('Clear keywords'),
         reload: z.boolean().optional().describe('Return full article in response'),
