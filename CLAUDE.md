@@ -241,7 +241,7 @@ helpscout docs article get <id>
 helpscout docs article search --query <q> [--collection <id>] [--status <s>] [--all]
 helpscout docs article list-related <id> [--all]
 helpscout docs article list-revisions <id> [--all]
-helpscout docs article get-revision <articleId> <revisionId>
+helpscout docs article get-revision <revisionId>
 
 helpscout docs article create [options]
   --collection <id>   (required)

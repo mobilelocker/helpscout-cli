@@ -193,15 +193,14 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
   server.registerTool(
     'get_article_revision',
     {
-      description: 'Get a specific Docs article revision.',
+      description: 'Get a specific Docs article revision by revision ID.',
       inputSchema: {
-        articleId: z.string(),
-        revisionId: z.string(),
+        revisionId: z.string().describe('Revision ID from list_article_revisions'),
       },
     },
-    async ({ articleId, revisionId }) => {
+    async ({ revisionId }) => {
       try {
-        const data = await docs.get(`/articles/${articleId}/revisions/${revisionId}`);
+        const data = await docs.get(`/revisions/${revisionId}`);
         return ok(data?.revision ?? data);
       } catch (e) {
         return fail(e);

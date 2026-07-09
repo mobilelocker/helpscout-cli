@@ -54,7 +54,7 @@
         {
           "id": "articles.get-revision",
           "method": "GET",
-          "path": "/articles/{articleId}/revisions/{revisionId}",
+          "path": "/revisions/{revisionId}",
           "responsePattern": "json",
           "cliCommand": "docs article get-revision",
           "mcpTool": "get_article_revision",

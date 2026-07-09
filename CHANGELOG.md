@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.1] — 2026-07-09
+
+### Fixed
+
+- `docs article get-revision` and MCP `get_article_revision` returned HTTP 404 — use the correct Docs API endpoint `GET /v1/revisions/{id}` instead of `/articles/{articleId}/revisions/{revisionId}` ([API docs](https://developer.helpscout.com/docs-api/articles/revisions/get/))
+
 ## [1.3.0] — 2026-07-09
 
 ### Added

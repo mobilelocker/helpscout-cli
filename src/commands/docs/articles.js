@@ -125,11 +125,11 @@ export function makeArticleCommand() {
     });
 
   cmd
-    .command('get-revision <articleId> <revisionId>')
-    .description('Get a specific article revision')
-    .action(async (articleId, revisionId, opts, cmd) => {
+    .command('get-revision <revisionId>')
+    .description('Get a specific article revision by revision ID')
+    .action(async (revisionId, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
-      const data = await docs.get(`/articles/${articleId}/revisions/${revisionId}`);
+      const data = await docs.get(`/revisions/${revisionId}`);
       output(data?.revision ?? data, globalOpts);
     });
 
