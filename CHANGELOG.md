@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.1] — 2026-07-09
+
+### Fixed
+
+- `update_article` / `docs article update` now follow Docs API `categories` semantics on update: omit = unchanged, `null` / `--clear-categories` = move to Uncategorized, array = replace (empty array normalizes to `null`; Uncategorized id must not be passed in an array) ([API docs](https://developer.helpscout.com/docs-api/articles/update/))
+
 ## [1.4.0] — 2026-07-09
 
 ### Added

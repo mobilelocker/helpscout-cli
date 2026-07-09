@@ -231,7 +231,7 @@ export function makeArticleCommand() {
     .option('--category <id...>', 'Category IDs (repeatable)')
     .option('--related <id...>', 'Related article IDs (repeatable)')
     .option('--keyword <word...>', 'Keywords (repeatable)')
-    .option('--clear-categories', 'Clear all categories')
+    .option('--clear-categories', 'Set categories to null (move article to Uncategorized per API)')
     .option('--clear-related', 'Clear related articles')
     .option('--clear-keywords', 'Clear keywords')
     .option('--reload', 'Return the updated article in the response')
