@@ -73,6 +73,8 @@ After running `install.sh`, it is registered automatically with Claude Code (use
 
 The MCP server includes an `auth_login` tool that opens the browser OAuth flow on demand, so agents can handle authentication without leaving the conversation.
 
+Docs article tools support full API fields — including `categories`, `related`, and `keywords` arrays on `create_article` and `update_article` (no raw HTTP/cURL needed). On update, omit `categories` to leave them unchanged, pass `null` or `clearCategories: true` to move to Uncategorized, or pass an array of category IDs to replace.
+
 ## Output Format
 
 By default the CLI detects whether it's running in a terminal:
@@ -172,19 +174,25 @@ helpscout docs article list --collection <collection-id> --all
 # Search
 helpscout docs article search --query "getting started" --site <site-id>
 
-# Create with categories (repeatable flags)
+# Create with one or more categories (repeat --category for each id)
 helpscout docs article create \
   --collection <collection-id> \
   --name "New Feature Guide" \
   --text "<p>Content here.</p>" \
   --category <category-id> \
+  --category <other-category-id> \
   --keyword "feature" \
   --reload
 
+# Update categories: assign, leave unchanged, or move to Uncategorized
 helpscout docs article update <id> --status published
-helpscout docs article update <id> --clear-categories   # null-clear arrays on update
+helpscout docs article update <id> --category cat-a --category cat-b   # replace category list
+helpscout docs article update <id> --clear-categories                  # null → Uncategorized
+
 helpscout docs article delete <id>
 ```
+
+**MCP (`create_article` / `update_article`):** pass `categories` as a string array, e.g. `"categories": ["<category-id>"]`. On update, omit the field to leave categories unchanged; use `"categories": null` or `"clearCategories": true` for Uncategorized.
 
 ### Docs Collections, Categories, Redirects, Sites
 
@@ -196,7 +204,7 @@ helpscout docs category list --collection <collection-id>
 helpscout docs category create --collection <id> --name "Getting Started"
 
 helpscout docs redirect list --site <site-id>
-helpscout docs redirect create --site <id> --from /old --to https://example.com/new
+helpscout docs redirect create --site <id> --url-mapping /old --redirect https://example.com/new
 
 helpscout docs site create --title "Docs" --subdomain docs --bg-color "#444444" --has-contact-form
 helpscout docs site restrictions update <site-id> --enabled --authentication CALLBACK --sign-in-url https://example.com/signin
