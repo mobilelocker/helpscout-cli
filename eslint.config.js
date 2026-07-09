@@ -13,6 +13,8 @@ export default [
         process: 'readonly',
         Buffer: 'readonly',
         fetch: 'readonly',
+        FormData: 'readonly',
+        Blob: 'readonly',
         URL: 'readonly',
         URLSearchParams: 'readonly',
         console: 'readonly',
@@ -33,6 +35,8 @@ export default [
     languageOptions: {
       globals: {
         mock: 'readonly',
+        FormData: 'readonly',
+        Blob: 'readonly',
       },
     },
   },

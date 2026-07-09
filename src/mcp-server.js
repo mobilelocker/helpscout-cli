@@ -9,10 +9,12 @@ import { z } from 'zod';
 import { login, logout, status } from './auth.js';
 import { mailbox, buildCustomStatus } from './mailbox-client.js';
 import { docs } from './docs-client.js';
+import { normalizeWriteResponse } from './http.js';
+import { registerDocsTools } from './mcp-server-docs.js';
 import { USER_STATUS_COLUMNS } from './columns.js';
 import pkg from '../package.json' with { type: 'json' };
 
-// 29 tools:
+// 61 tools:
 //   Auth (3):         auth_status, auth_login, auth_logout
 //   Conversations (5): list_conversations, get_conversation, create_conversation,
 //                      update_conversation, delete_conversation
@@ -22,9 +24,7 @@ import pkg from '../package.json' with { type: 'json' };
 //   Users (5):        list_users, get_current_user (get_user via list), get_user_status,
 //                     list_user_statuses, set_user_status
 //   Tags (1):         list_tags
-//   Articles (6):     list_articles, get_article, search_articles, create_article,
-//                     update_article, delete_article
-//   Collections (2):  list_collections, get_collection
+//   Docs (39):       see registerDocsTools in mcp-server-docs.js
 const server = new McpServer({ name: 'helpscout', version: pkg.version });
 
 function ok(data) {
@@ -205,7 +205,7 @@ server.registerTool(
       if (tags) payload.tags = tags;
       if (assignedTo) payload.assignTo = assignedTo;
       const data = await mailbox.post('/conversations', payload);
-      return ok(data ?? { ok: true });
+      return ok(normalizeWriteResponse(data));
     } catch (e) {
       return fail(e);
     }
@@ -426,7 +426,7 @@ server.registerTool(
       if (lastName) body.lastName = lastName;
       if (phone) body.phones = [{ value: phone, type: 'work' }];
       const data = await mailbox.post('/customers', body);
-      return ok(data ?? { ok: true });
+      return ok(normalizeWriteResponse(data));
     } catch (e) {
       return fail(e);
     }
@@ -631,220 +631,7 @@ server.registerTool(
   },
 );
 
-// ─── Docs Articles ────────────────────────────────────────────────────────────
-
-server.registerTool(
-  'list_articles',
-  {
-    description: 'List Help Scout Docs articles, optionally filtered by collection.',
-    inputSchema: {
-      collectionId: z.string().optional().describe('Filter by collection ID'),
-      status: z
-        .enum(['published', 'notpublished'])
-        .optional()
-        .describe('Filter by status (default: published)'),
-      all: z.boolean().optional().describe('Fetch all pages'),
-      markdown: z.boolean().optional().describe('Return a Markdown table instead of JSON'),
-    },
-  },
-  async ({ collectionId, status, all, markdown }) => {
-    try {
-      const params = {};
-      if (status) params.status = status;
-      const path = collectionId ? `/collections/${collectionId}/articles` : '/articles';
-      const rows = all
-        ? await docs.getAll(path, params)
-        : ((await docs.get(path, params))?.articles?.items ?? []);
-      if (markdown) {
-        return okMarkdown(rows, [
-          { key: 'id', header: 'ID' },
-          { key: 'name', header: 'Title' },
-          { key: 'status', header: 'Status' },
-          { key: 'collectionId', header: 'Collection' },
-          { key: 'updatedAt', header: 'Updated' },
-        ]);
-      }
-      return ok(rows);
-    } catch (e) {
-      return fail(e);
-    }
-  },
-);
-
-server.registerTool(
-  'get_article',
-  {
-    description: 'Get a single Docs article by ID, including full body HTML.',
-    inputSchema: {
-      id: z.string().describe('Article ID'),
-    },
-  },
-  async ({ id }) => {
-    try {
-      const data = await docs.get(`/articles/${id}`);
-      return ok(data?.article ?? data);
-    } catch (e) {
-      return fail(e);
-    }
-  },
-);
-
-server.registerTool(
-  'search_articles',
-  {
-    description: 'Search Help Scout Docs articles by keyword.',
-    inputSchema: {
-      query: z.string().describe('Search query'),
-      collectionId: z.string().optional().describe('Limit search to a specific collection'),
-      status: z.enum(['published', 'notpublished']).optional(),
-      all: z.boolean().optional().describe('Fetch all pages'),
-      markdown: z.boolean().optional().describe('Return a Markdown table instead of JSON'),
-    },
-  },
-  async ({ query, collectionId, status, all, markdown }) => {
-    try {
-      const params = { query };
-      if (collectionId) params.collectionId = collectionId;
-      if (status) params.status = status;
-      const rows = all
-        ? await docs.getAll('/search/articles', params)
-        : ((await docs.get('/search/articles', params))?.articles?.items ?? []);
-      if (markdown) {
-        return okMarkdown(rows, [
-          { key: 'id', header: 'ID' },
-          { key: 'name', header: 'Title' },
-          { key: 'status', header: 'Status' },
-          { key: 'collectionId', header: 'Collection' },
-          { key: 'updatedAt', header: 'Updated' },
-        ]);
-      }
-      return ok(rows);
-    } catch (e) {
-      return fail(e);
-    }
-  },
-);
-
-server.registerTool(
-  'create_article',
-  {
-    description: 'Create a new Help Scout Docs article (draft by default).',
-    inputSchema: {
-      collectionId: z.string().describe('Collection ID to create the article in'),
-      name: z.string().describe('Article title'),
-      text: z.string().optional().describe('Article body HTML'),
-      status: z
-        .enum(['published', 'notpublished'])
-        .optional()
-        .describe('Status (default: notpublished)'),
-    },
-  },
-  async ({ collectionId, name, text, status }) => {
-    try {
-      const body = { collectionId, name, status: status ?? 'notpublished' };
-      if (text) body.text = text;
-      const data = await docs.post('/articles', body);
-      return ok(data?.article ?? data ?? { ok: true });
-    } catch (e) {
-      return fail(e);
-    }
-  },
-);
-
-server.registerTool(
-  'update_article',
-  {
-    description: 'Update an existing Help Scout Docs article.',
-    inputSchema: {
-      id: z.string().describe('Article ID'),
-      name: z.string().optional().describe('New title'),
-      text: z.string().optional().describe('New body HTML'),
-      status: z.enum(['published', 'notpublished']).optional(),
-    },
-  },
-  async ({ id, name, text, status }) => {
-    try {
-      const body = {};
-      if (name) body.name = name;
-      if (text) body.text = text;
-      if (status) body.status = status;
-      const data = await docs.put(`/articles/${id}`, body);
-      return ok(data?.article ?? { ok: true, id });
-    } catch (e) {
-      return fail(e);
-    }
-  },
-);
-
-server.registerTool(
-  'delete_article',
-  {
-    description: 'Delete a Help Scout Docs article.',
-    inputSchema: {
-      id: z.string().describe('Article ID'),
-    },
-  },
-  async ({ id }) => {
-    try {
-      await docs.delete(`/articles/${id}`);
-      return ok({ ok: true, id });
-    } catch (e) {
-      return fail(e);
-    }
-  },
-);
-
-// ─── Docs Collections ─────────────────────────────────────────────────────────
-
-server.registerTool(
-  'list_collections',
-  {
-    description: 'List Help Scout Docs collections. Use this to get collection IDs.',
-    inputSchema: {
-      visibility: z.enum(['public', 'private']).optional(),
-      all: z.boolean().optional().describe('Fetch all pages'),
-      markdown: z.boolean().optional().describe('Return a Markdown table instead of JSON'),
-    },
-  },
-  async ({ visibility, all, markdown }) => {
-    try {
-      const params = {};
-      if (visibility) params.visibility = visibility;
-      const rows = all
-        ? await docs.getAll('/collections', params)
-        : ((await docs.get('/collections', params))?.collections?.items ?? []);
-      if (markdown) {
-        return okMarkdown(rows, [
-          { key: 'id', header: 'ID' },
-          { key: 'name', header: 'Name' },
-          { key: 'visibility', header: 'Visibility' },
-          { key: 'updatedAt', header: 'Updated' },
-        ]);
-      }
-      return ok(rows);
-    } catch (e) {
-      return fail(e);
-    }
-  },
-);
-
-server.registerTool(
-  'get_collection',
-  {
-    description: 'Get a Help Scout Docs collection by ID.',
-    inputSchema: {
-      id: z.string().describe('Collection ID'),
-    },
-  },
-  async ({ id }) => {
-    try {
-      const data = await docs.get(`/collections/${id}`);
-      return ok(data?.collection ?? data);
-    } catch (e) {
-      return fail(e);
-    }
-  },
-);
+registerDocsTools(server, { docs, ok, okMarkdown, fail });
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 

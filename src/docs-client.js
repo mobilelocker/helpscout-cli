@@ -5,7 +5,7 @@
  * Rate limiting: X-RateLimit-Reset (Unix timestamp for reset), 429 on limit
  * Pagination: { page, pages, count, items } envelope
  */
-import { USER_AGENT, parseJsonBody } from './http.js';
+import { USER_AGENT, parseJsonBody, parseCreatedResponse } from './http.js';
 
 const BASE_URL = 'https://docsapi.helpscout.net/v1';
 const MAX_RETRIES = 3;
@@ -23,7 +23,7 @@ function buildBasicAuth(apiKey) {
   return 'Basic ' + Buffer.from(`${apiKey}:X`).toString('base64');
 }
 
-async function request(method, path, { body, params } = {}) {
+async function request(method, path, { body, params, formData } = {}) {
   let url = `${BASE_URL}${path}`;
   if (params) {
     const qs = new URLSearchParams(params);
@@ -37,14 +37,18 @@ async function request(method, path, { body, params } = {}) {
       method,
       headers: {
         Authorization: buildBasicAuth(apiKey),
-        'Content-Type': 'application/json',
         Accept: 'application/json',
         'User-Agent': USER_AGENT,
       },
     };
 
-    if (body !== null && body !== undefined) {
-      options.body = JSON.stringify(body);
+    if (formData) {
+      options.body = formData;
+    } else {
+      options.headers['Content-Type'] = 'application/json';
+      if (body !== null && body !== undefined) {
+        options.body = JSON.stringify(body);
+      }
     }
 
     const res = await fetch(url, options);
@@ -71,7 +75,8 @@ async function request(method, path, { body, params } = {}) {
       throw Object.assign(new Error(message), { status: res.status });
     }
 
-    return parseJsonBody(res);
+    const parsed = await parseJsonBody(res);
+    return parseCreatedResponse(res, parsed) ?? parsed;
   }
 
   throw new Error('Exceeded maximum retries due to rate limiting.');
@@ -128,12 +133,19 @@ export const docs = {
     return results;
   },
 
-  async post(path, body) {
-    return request('POST', path, { body });
+  async post(path, body, params) {
+    return request('POST', path, { body, params });
   },
 
-  async put(path, body) {
-    return request('PUT', path, { body });
+  async put(path, body, params) {
+    return request('PUT', path, { body, params });
+  },
+
+  /**
+   * POST multipart/form-data (assets upload).
+   */
+  async upload(path, formData, params) {
+    return request('POST', path, { formData, params });
   },
 
   async delete(path) {

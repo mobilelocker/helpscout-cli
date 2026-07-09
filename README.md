@@ -1,6 +1,6 @@
 # helpscout CLI
 
-A command-line tool for [Help Scout](https://www.helpscout.com), covering both the Mailbox API v2 (conversations, customers, users) and the Docs API v1 (articles, collections).
+A command-line tool for [Help Scout](https://www.helpscout.com), covering the Mailbox API v2 (conversations, customers, users) and the full Docs API v1 (articles, collections, categories, redirects, sites, assets).
 
 Designed for scripting, automation, and use by AI agents. Ships with an MCP server (`helpscout-mcp`) for direct integration with Claude Code, Claude Desktop, and Cursor. Outputs JSON by default when not in a terminal, pretty tables when it is.
 
@@ -172,30 +172,48 @@ helpscout docs article list --collection <collection-id> --all
 # Search
 helpscout docs article search --query "getting started"
 
-# Create a draft, then publish
+# Create a draft (returns id from Location header), then publish
 helpscout docs article create \
   --collection <collection-id> \
   --name "New Feature Guide" \
   --text "<p>Content here.</p>"
 
-helpscout docs article update <id> --status published
+# Or create with full body in one call
+helpscout docs article create --collection <id> --name "Guide" --reload
 
-# Delete
+helpscout docs article update <id> --status published
 helpscout docs article delete <id>
 ```
 
-### Docs Collections
+### Docs Collections, Categories, Redirects, Sites
 
 ```sh
 helpscout docs collection list
-helpscout docs collection get <id>
+helpscout docs collection create --site <site-id> --name "FAQ"
+
+helpscout docs category list --collection <collection-id>
+helpscout docs category create --collection <id> --name "Getting Started"
+
+helpscout docs redirect list --site <site-id>
+helpscout docs redirect create --site <id> --from /old --to https://example.com/new
+
+helpscout docs site list
+helpscout docs site restrictions get <site-id>
+```
+
+### Docs Assets
+
+```sh
+helpscout docs asset create-article --file ./screenshot.png
+helpscout docs asset create-settings --file ./logo.png
 ```
 
 ## Development
 
 ```sh
-npm test          # run tests
-npm run lint      # check for lint errors
+npm test              # run tests
+npm run scrape:docs-api  # refresh docs/docs-api-endpoints.json from Help Scout docs
+npm run lint          # check for lint errors
 npm run lint:fix  # auto-fix lint errors
 npm run format    # format with Prettier
 npm run build     # bundle to dist/helpscout and dist/helpscout-mcp
