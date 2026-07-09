@@ -5,6 +5,24 @@ import { openAsBlob } from 'node:fs';
 import { basename } from 'node:path';
 import { z } from 'zod';
 import { normalizeWriteResponse } from './http.js';
+import {
+  articleListQueryFields,
+  categoryListQueryFields,
+  collectionListQueryFields,
+  nullableStringArray,
+  searchQueryFields,
+  siteOptionalFields,
+} from './docs-api-schemas.js';
+import {
+  buildArticleCreateBody,
+  buildArticleUpdateBody,
+  buildCollectionUpdateBody,
+  buildSiteCreateBody,
+  buildSiteRestrictionsBody,
+  buildSiteUpdateBody,
+  mergeRedirectUpdate,
+  reloadParams,
+} from './docs-request-builders.js';
 
 const ARTICLE_COLUMNS = [
   { key: 'id', header: 'ID' },
@@ -64,18 +82,24 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
       inputSchema: {
         collectionId: z.string().optional().describe('Collection ID'),
         categoryId: z.string().optional().describe('Category ID'),
-        status: z.enum(['published', 'notpublished']).optional(),
+        status: z.enum(['all', 'published', 'notpublished']).optional(),
+        sort: articleListQueryFields.sort,
+        order: articleListQueryFields.order,
+        pageSize: articleListQueryFields.pageSize,
         all: z.boolean().optional(),
         markdown: z.boolean().optional(),
       },
     },
-    async ({ collectionId, categoryId, status, all, markdown }) => {
+    async ({ collectionId, categoryId, status, sort, order, pageSize, all, markdown }) => {
       try {
         if (!collectionId && !categoryId) {
           return fail(new Error('Provide collectionId or categoryId'));
         }
         const params = {};
         if (status) params.status = status;
+        if (sort) params.sort = sort;
+        if (order) params.order = order;
+        if (pageSize) params.pageSize = pageSize;
         const path = categoryId
           ? `/categories/${categoryId}/articles`
           : `/collections/${collectionId}/articles`;
@@ -114,15 +138,21 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
         query: z.string(),
         collectionId: z.string().optional(),
         status: z.enum(['published', 'notpublished']).optional(),
+        siteId: searchQueryFields.siteId,
+        visibility: searchQueryFields.visibility,
+        pageSize: searchQueryFields.pageSize,
         all: z.boolean().optional(),
         markdown: z.boolean().optional(),
       },
     },
-    async ({ query, collectionId, status, all, markdown }) => {
+    async ({ query, collectionId, status, siteId, visibility, pageSize, all, markdown }) => {
       try {
         const params = { query };
         if (collectionId) params.collectionId = collectionId;
         if (status) params.status = status;
+        if (siteId) params.siteId = siteId;
+        if (visibility) params.visibility = visibility;
+        if (pageSize) params.pageSize = pageSize;
         const rows = all
           ? await docs.getAll('/search/articles', params)
           : ((await docs.get('/search/articles', params))?.articles?.items ?? []);
@@ -141,14 +171,18 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
       inputSchema: {
         id: z.string().describe('Article ID'),
         status: z.enum(['all', 'published', 'notpublished']).optional(),
+        sort: articleListQueryFields.sort,
+        order: articleListQueryFields.order,
         all: z.boolean().optional(),
         markdown: z.boolean().optional(),
       },
     },
-    async ({ id, status, all, markdown }) => {
+    async ({ id, status, sort, order, all, markdown }) => {
       try {
         const params = {};
         if (status) params.status = status;
+        if (sort) params.sort = sort;
+        if (order) params.order = order;
         const path = `/articles/${id}/related`;
         const rows = all
           ? await docs.getAll(path, params)
@@ -215,17 +249,28 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
       inputSchema: {
         collectionId: z.string(),
         name: z.string(),
-        text: z.string().optional(),
+        text: z.string(),
         status: z.enum(['published', 'notpublished']).optional(),
+        slug: z.string().optional(),
+        categories: z.array(z.string()).optional().describe('Category IDs'),
+        related: z.array(z.string()).optional().describe('Related article IDs'),
+        keywords: z.array(z.string()).optional().describe('Search keywords'),
         reload: z.boolean().optional().describe('Return full article in response'),
       },
     },
-    async ({ collectionId, name, text, status, reload }) => {
+    async ({ collectionId, name, text, status, slug, categories, related, keywords, reload }) => {
       try {
-        const body = { collectionId, name, status: status ?? 'notpublished' };
-        if (text) body.text = text;
-        const params = reload ? { reload: 'true' } : undefined;
-        const data = await docs.post('/articles', body, params);
+        const body = buildArticleCreateBody({
+          collectionId,
+          name,
+          text,
+          status,
+          slug,
+          categories,
+          related,
+          keywords,
+        });
+        const data = await docs.post('/articles', body, reloadParams(reload));
         return ok(normalizeWriteResponse(data));
       } catch (e) {
         return fail(e);
@@ -242,11 +287,12 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
         filePath: z.string().describe('Absolute path to file on disk'),
         name: z.string().optional(),
         categoryId: z.string().optional(),
+        slug: z.string().optional(),
         type: z.enum(['html', 'text', 'markdown']).optional(),
         reload: z.boolean().optional(),
       },
     },
-    async ({ collectionId, filePath, name, categoryId, type, reload }) => {
+    async ({ collectionId, filePath, name, categoryId, slug, type, reload }) => {
       try {
         const apiKey = process.env.HELPSCOUT_API_KEY;
         if (!apiKey) throw new Error('HELPSCOUT_API_KEY environment variable is not set.');
@@ -255,11 +301,11 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
         form.append('collectionId', collectionId);
         if (name) form.append('name', name);
         if (categoryId) form.append('categoryId', categoryId);
+        if (slug) form.append('slug', slug);
         if (type) form.append('type', type);
         const blob = await openAsBlob(filePath);
         form.append('file', blob, basename(filePath));
-        const params = reload ? { reload: 'true' } : undefined;
-        const data = await docs.upload('/articles/upload', form, params);
+        const data = await docs.upload('/articles/upload', form, reloadParams(reload));
         return ok(normalizeWriteResponse(data));
       } catch (e) {
         return fail(e);
@@ -276,15 +322,44 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
         name: z.string().optional(),
         text: z.string().optional(),
         status: z.enum(['published', 'notpublished']).optional(),
+        slug: z.string().optional(),
+        categories: nullableStringArray(),
+        related: nullableStringArray(),
+        keywords: nullableStringArray(),
+        clearCategories: z.boolean().optional().describe('Clear all categories'),
+        clearRelated: z.boolean().optional().describe('Clear related articles'),
+        clearKeywords: z.boolean().optional().describe('Clear keywords'),
+        reload: z.boolean().optional().describe('Return full article in response'),
       },
     },
-    async ({ id, name, text, status }) => {
+    async ({
+      id,
+      name,
+      text,
+      status,
+      slug,
+      categories,
+      related,
+      keywords,
+      clearCategories,
+      clearRelated,
+      clearKeywords,
+      reload,
+    }) => {
       try {
-        const body = {};
-        if (name) body.name = name;
-        if (text) body.text = text;
-        if (status) body.status = status;
-        const data = await docs.put(`/articles/${id}`, body);
+        const body = buildArticleUpdateBody({
+          name,
+          text,
+          status,
+          slug,
+          categories,
+          related,
+          keywords,
+          clearCategories,
+          clearRelated,
+          clearKeywords,
+        });
+        const data = await docs.put(`/articles/${id}`, body, reloadParams(reload));
         return ok(normalizeWriteResponse(data, { ok: true, id }));
       } catch (e) {
         return fail(e);
@@ -371,15 +446,19 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
       inputSchema: {
         visibility: z.enum(['public', 'private']).optional(),
         siteId: z.string().optional(),
+        sort: collectionListQueryFields.sort,
+        order: collectionListQueryFields.order,
         all: z.boolean().optional(),
         markdown: z.boolean().optional(),
       },
     },
-    async ({ visibility, siteId, all, markdown }) => {
+    async ({ visibility, siteId, sort, order, all, markdown }) => {
       try {
         const params = {};
         if (visibility) params.visibility = visibility;
         if (siteId) params.siteId = siteId;
+        if (sort) params.sort = sort;
+        if (order) params.order = order;
         const rows = all
           ? await docs.getAll('/collections', params)
           : ((await docs.get('/collections', params))?.collections?.items ?? []);
@@ -443,16 +522,14 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
         visibility: z.enum(['public', 'private']).optional(),
         order: z.number().optional(),
         description: z.string().optional(),
+        siteId: z.string().optional().describe('Move collection to another site'),
+        reload: z.boolean().optional(),
       },
     },
-    async ({ id, name, visibility, order, description }) => {
+    async ({ id, name, visibility, order, description, siteId, reload }) => {
       try {
-        const body = {};
-        if (name) body.name = name;
-        if (visibility) body.visibility = visibility;
-        if (order !== undefined) body.order = order;
-        if (description) body.description = description;
-        const data = await docs.put(`/collections/${id}`, body);
+        const body = buildCollectionUpdateBody({ name, visibility, order, description, siteId });
+        const data = await docs.put(`/collections/${id}`, body, reloadParams(reload));
         return ok(normalizeWriteResponse(data, { ok: true, id }));
       } catch (e) {
         return fail(e);
@@ -484,16 +561,21 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
       description: 'List categories in a Docs collection.',
       inputSchema: {
         collectionId: z.string(),
+        sort: categoryListQueryFields.sort,
+        order: categoryListQueryFields.order,
         all: z.boolean().optional(),
         markdown: z.boolean().optional(),
       },
     },
-    async ({ collectionId, all, markdown }) => {
+    async ({ collectionId, sort, order, all, markdown }) => {
       try {
         const path = `/collections/${collectionId}/categories`;
+        const params = {};
+        if (sort) params.sort = sort;
+        if (order) params.order = order;
         const rows = all
-          ? await docs.getAll(path)
-          : ((await docs.get(path))?.categories?.items ?? []);
+          ? await docs.getAll(path, params)
+          : ((await docs.get(path, params))?.categories?.items ?? []);
         if (markdown) return okMarkdown(rows, CATEGORY_COLUMNS);
         return ok(rows);
       } catch (e) {
@@ -707,16 +789,18 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
       description: 'Update a Docs redirect.',
       inputSchema: {
         id: z.string(),
+        siteId: z.string().optional().describe('Site ID (merged from existing if omitted)'),
         urlMapping: z.string().optional(),
         redirect: z.string().optional(),
+        reload: z.boolean().optional(),
       },
     },
-    async ({ id, urlMapping, redirect }) => {
+    async ({ id, siteId, urlMapping, redirect, reload }) => {
       try {
-        const body = {};
-        if (urlMapping) body.urlMapping = urlMapping;
-        if (redirect) body.redirect = redirect;
-        const data = await docs.put(`/redirects/${id}`, body);
+        const existingData = await docs.get(`/redirects/${id}`);
+        const existing = existingData?.redirect ?? existingData;
+        const body = mergeRedirectUpdate(existing, { siteId, urlMapping, redirect });
+        const data = await docs.put(`/redirects/${id}`, body, reloadParams(reload));
         return ok(normalizeWriteResponse(data, { ok: true, id }));
       } catch (e) {
         return fail(e);
@@ -787,14 +871,15 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
       inputSchema: {
         title: z.string(),
         subDomain: z.string(),
+        ...siteOptionalFields,
         reload: z.boolean().optional(),
       },
     },
-    async ({ title, subDomain, reload }) => {
+    async (input) => {
       try {
-        const body = { title, subDomain };
-        const params = reload ? { reload: 'true' } : undefined;
-        const data = await docs.post('/sites', body, params);
+        const { reload, ...fields } = input;
+        const body = buildSiteCreateBody(fields);
+        const data = await docs.post('/sites', body, reloadParams(reload));
         return ok(normalizeWriteResponse(data));
       } catch (e) {
         return fail(e);
@@ -808,16 +893,15 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
       description: 'Update a Docs site.',
       inputSchema: {
         id: z.string(),
-        title: z.string().optional(),
-        subDomain: z.string().optional(),
+        ...siteOptionalFields,
+        reload: z.boolean().optional(),
       },
     },
-    async ({ id, title, subDomain }) => {
+    async (input) => {
       try {
-        const body = {};
-        if (title) body.title = title;
-        if (subDomain) body.subDomain = subDomain;
-        const data = await docs.put(`/sites/${id}`, body);
+        const { id, reload, ...fields } = input;
+        const body = buildSiteUpdateBody(fields);
+        const data = await docs.put(`/sites/${id}`, body, reloadParams(reload));
         return ok(normalizeWriteResponse(data, { ok: true, id }));
       } catch (e) {
         return fail(e);
@@ -864,17 +948,13 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
       inputSchema: {
         siteId: z.string(),
         enabled: z.boolean().optional(),
+        authentication: z.enum(['CALLBACK']).optional().describe('Authentication mode'),
         signInUrl: z.string().optional().describe('Custom callback sign-in URL'),
       },
     },
-    async ({ siteId, enabled, signInUrl }) => {
+    async ({ siteId, enabled, authentication, signInUrl }) => {
       try {
-        const body = {};
-        if (enabled !== undefined) body.enabled = enabled;
-        if (signInUrl) {
-          body.authentication = 'CALLBACK';
-          body.callbackConfiguration = { signInUrl };
-        }
+        const body = buildSiteRestrictionsBody({ enabled, authentication, signInUrl });
         const data = await docs.put(`/sites/${siteId}/restricted`, body);
         return ok(data ?? { ok: true, siteId });
       } catch (e) {

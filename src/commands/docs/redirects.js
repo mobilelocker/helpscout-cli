@@ -3,6 +3,7 @@
  */
 import { Command } from 'commander';
 import { docs } from '../../docs-client.js';
+import { mergeRedirectUpdate, reloadParams } from '../../docs-request-builders.js';
 import { normalizeWriteResponse } from '../../http.js';
 import { output, outputTable } from '../../output.js';
 
@@ -82,13 +83,19 @@ export function makeRedirectCommand() {
     .description('Update a redirect')
     .option('--url-mapping <path>', 'Path to redirect from')
     .option('--redirect <url>', 'Destination URL')
+    .option('--site <id>', 'Site ID (required by API; fetched from existing if omitted)')
+    .option('--reload', 'Return the updated redirect in the response')
     .action(async (id, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
-      const body = {};
-      if (opts.urlMapping) body.urlMapping = opts.urlMapping;
-      if (opts.redirect) body.redirect = opts.redirect;
+      const existingData = await docs.get(`/redirects/${id}`);
+      const existing = existingData?.redirect ?? existingData;
+      const body = mergeRedirectUpdate(existing, {
+        siteId: opts.site,
+        urlMapping: opts.urlMapping,
+        redirect: opts.redirect,
+      });
 
-      const data = await docs.put(`/redirects/${id}`, body);
+      const data = await docs.put(`/redirects/${id}`, body, reloadParams(opts.reload));
       output(normalizeWriteResponse(data, { ok: true, id }), globalOpts);
     });
 

@@ -13,6 +13,7 @@
           "responsePattern": "json-paged",
           "cliCommand": "docs article list",
           "mcpTool": "list_articles",
+          "queryParams": ["status", "sort", "order", "pageSize"],
           "implemented": true
         },
         {
@@ -22,6 +23,7 @@
           "responsePattern": "json-paged",
           "cliCommand": "docs article search",
           "mcpTool": "search_articles",
+          "queryParams": ["query", "collectionId", "status", "siteId", "visibility", "pageSize"],
           "implemented": true
         },
         {
@@ -31,6 +33,7 @@
           "responsePattern": "json-paged",
           "cliCommand": "docs article list-related",
           "mcpTool": "list_related_articles",
+          "queryParams": ["status", "sort", "order"],
           "implemented": true
         },
         {
@@ -67,6 +70,18 @@
           "responsePattern": "201-location",
           "cliCommand": "docs article create",
           "mcpTool": "create_article",
+          "bodyFields": [
+            "collectionId",
+            "name",
+            "text",
+            "status",
+            "slug",
+            "categories",
+            "related",
+            "keywords"
+          ],
+          "requiredBody": ["collectionId", "name", "text"],
+          "queryParams": ["reload"],
           "implemented": true
         },
         {
@@ -76,6 +91,8 @@
           "responsePattern": "204-or-json",
           "cliCommand": "docs article update",
           "mcpTool": "update_article",
+          "bodyFields": ["name", "text", "status", "slug", "categories", "related", "keywords"],
+          "queryParams": ["reload"],
           "implemented": true
         },
         {
@@ -85,12 +102,14 @@
           "responsePattern": "201-location",
           "cliCommand": "docs article upload",
           "mcpTool": "upload_article",
+          "formFields": ["collectionId", "name", "categoryId", "type", "slug", "file"],
+          "queryParams": ["reload"],
           "implemented": true
         },
         {
           "id": "articles.update-view-count",
           "method": "PUT",
-          "path": "/articles/{articleId}/view-count",
+          "path": "/articles/{articleId}/views",
           "responsePattern": "204",
           "cliCommand": "docs article update-view-count",
           "mcpTool": "update_article_view_count",
@@ -160,6 +179,7 @@
           "responsePattern": "json-paged",
           "cliCommand": "docs category list",
           "mcpTool": "list_categories",
+          "queryParams": ["sort", "order"],
           "implemented": true
         },
         {
@@ -219,6 +239,7 @@
           "responsePattern": "json-paged",
           "cliCommand": "docs collection list",
           "mcpTool": "list_collections",
+          "queryParams": ["visibility", "siteId", "sort", "order"],
           "implemented": true
         },
         {
@@ -246,6 +267,8 @@
           "responsePattern": "204-or-json",
           "cliCommand": "docs collection update",
           "mcpTool": "update_collection",
+          "bodyFields": ["name", "visibility", "order", "description", "siteId"],
+          "queryParams": ["reload"],
           "implemented": true
         },
         {
@@ -305,6 +328,9 @@
           "responsePattern": "204-or-json",
           "cliCommand": "docs redirect update",
           "mcpTool": "update_redirect",
+          "bodyFields": ["siteId", "urlMapping", "redirect"],
+          "requiredBody": ["siteId", "urlMapping", "redirect"],
+          "queryParams": ["reload"],
           "implemented": true
         },
         {
@@ -346,6 +372,29 @@
           "responsePattern": "201-location",
           "cliCommand": "docs site create",
           "mcpTool": "create_site",
+          "bodyFields": [
+            "title",
+            "subDomain",
+            "status",
+            "cname",
+            "hasPublicSite",
+            "logoUrl",
+            "logoWidth",
+            "logoHeight",
+            "favIconUrl",
+            "touchIconUrl",
+            "homeUrl",
+            "homeLinkText",
+            "bgColor",
+            "description",
+            "hasContactForm",
+            "mailboxId",
+            "contactEmail",
+            "styleSheetUrl",
+            "headerCode"
+          ],
+          "requiredBody": ["title", "subDomain"],
+          "queryParams": ["reload"],
           "implemented": true
         },
         {
@@ -355,6 +404,28 @@
           "responsePattern": "204-or-json",
           "cliCommand": "docs site update",
           "mcpTool": "update_site",
+          "bodyFields": [
+            "title",
+            "subDomain",
+            "status",
+            "cname",
+            "hasPublicSite",
+            "logoUrl",
+            "logoWidth",
+            "logoHeight",
+            "favIconUrl",
+            "touchIconUrl",
+            "homeUrl",
+            "homeLinkText",
+            "bgColor",
+            "description",
+            "hasContactForm",
+            "mailboxId",
+            "contactEmail",
+            "styleSheetUrl",
+            "headerCode"
+          ],
+          "queryParams": ["reload"],
           "implemented": true
         },
         {
@@ -369,7 +440,7 @@
         {
           "id": "sites.get-restrictions",
           "method": "GET",
-          "path": "/sites/{siteId}/restrictions",
+          "path": "/sites/{siteId}/restricted",
           "responsePattern": "json",
           "cliCommand": "docs site restrictions get",
           "mcpTool": "get_site_restrictions",
@@ -378,10 +449,11 @@
         {
           "id": "sites.update-restrictions",
           "method": "PUT",
-          "path": "/sites/{siteId}/restrictions",
+          "path": "/sites/{siteId}/restricted",
           "responsePattern": "json",
           "cliCommand": "docs site restrictions update",
           "mcpTool": "update_site_restrictions",
+          "bodyFields": ["enabled", "authentication", "callbackConfiguration"],
           "implemented": true
         }
       ]

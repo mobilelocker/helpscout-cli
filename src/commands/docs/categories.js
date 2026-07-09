@@ -22,17 +22,26 @@ export function makeCategoryCommand() {
     .command('list')
     .description('List categories in a collection')
     .requiredOption('--collection <id>', 'Collection ID')
+    .option(
+      '--sort <field>',
+      'Sort field (order, number, name, articleCount, createdAt, updatedAt)',
+    )
+    .option('--order <dir>', 'Sort direction (asc, desc)')
     .option('--page <n>', 'Page number', '1')
     .option('--all', 'Fetch all pages')
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       const path = `/collections/${opts.collection}/categories`;
+      const params = {};
+      if (opts.sort) params.sort = opts.sort;
+      if (opts.order) params.order = opts.order;
 
       if (opts.all) {
-        const items = await docs.getAll(path);
+        const items = await docs.getAll(path, params);
         outputTable(items, COLUMNS, globalOpts);
       } else {
-        const data = await docs.get(path, { page: opts.page });
+        params.page = opts.page;
+        const data = await docs.get(path, params);
         const items = data?.categories?.items ?? [];
         outputTable(items, COLUMNS, globalOpts);
       }

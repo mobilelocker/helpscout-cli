@@ -3,6 +3,7 @@
  */
 import { Command } from 'commander';
 import { docs } from '../../docs-client.js';
+import { buildCollectionUpdateBody, reloadParams } from '../../docs-request-builders.js';
 import { normalizeWriteResponse } from '../../http.js';
 import { output, outputTable } from '../../output.js';
 
@@ -24,12 +25,16 @@ export function makeCollectionCommand() {
     .description('List all collections')
     .option('--site <id>', 'Filter by site ID')
     .option('--visibility <v>', 'Filter by visibility (public, private)')
+    .option('--sort <field>', 'Sort field (order, number, visibility, name, createdAt, updatedAt)')
+    .option('--order <dir>', 'Sort direction (asc, desc)')
     .option('--all', 'Fetch all pages')
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       const params = {};
       if (opts.site) params.siteId = opts.site;
       if (opts.visibility) params.visibility = opts.visibility;
+      if (opts.sort) params.sort = opts.sort;
+      if (opts.order) params.order = opts.order;
 
       if (opts.all) {
         const items = await docs.getAll('/collections', params);
@@ -81,15 +86,19 @@ export function makeCollectionCommand() {
     .option('--visibility <v>', 'public or private')
     .option('--order <n>', 'Display order')
     .option('--description <text>', 'Description')
+    .option('--site <id>', 'Move collection to another site')
+    .option('--reload', 'Return the updated collection in the response')
     .action(async (id, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
-      const body = {};
-      if (opts.name) body.name = opts.name;
-      if (opts.visibility) body.visibility = opts.visibility;
-      if (opts.order) body.order = Number(opts.order);
-      if (opts.description) body.description = opts.description;
+      const body = buildCollectionUpdateBody({
+        name: opts.name,
+        visibility: opts.visibility,
+        order: opts.order ? Number(opts.order) : undefined,
+        description: opts.description,
+        siteId: opts.site,
+      });
 
-      const data = await docs.put(`/collections/${id}`, body);
+      const data = await docs.put(`/collections/${id}`, body, reloadParams(opts.reload));
       output(normalizeWriteResponse(data, { ok: true, id }), globalOpts);
     });
 

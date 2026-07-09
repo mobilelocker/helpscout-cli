@@ -233,25 +233,32 @@ helpscout inbox webhook delete <id>
 helpscout docs article list [options]
   --collection <id>   list articles in a collection (required unless --category)
   --category <id>     list articles in a category
-  --status <s>        published (default) | notpublished
+  --status <s>        all (default) | published | notpublished
+  --sort <field>      order | number | status | name | popularity | createdAt | updatedAt
+  --order <dir>       asc | desc
+  --page-size <n>     max 100
   --page <n>
   --all
 
 helpscout docs article get <id>
-helpscout docs article search --query <q> [--collection <id>] [--status <s>] [--all]
-helpscout docs article list-related <id> [--all]
+helpscout docs article search --query <q> [--collection <id>] [--site <id>] [--status <s>] [--visibility all|public|private] [--page-size <n>] [--all]
+helpscout docs article list-related <id> [--status all|published|notpublished] [--sort] [--order] [--all]
 helpscout docs article list-revisions <id> [--all]
 helpscout docs article get-revision <revisionId>
 
 helpscout docs article create [options]
   --collection <id>   (required)
   --name <title>      (required)
-  --text <html>
+  --text <html>       (required)
   --status <s>        notpublished (default) | published
+  --slug <slug>
+  --category <id...>  category IDs (repeatable)
+  --related <id...>   related article IDs (repeatable)
+  --keyword <word...> keywords (repeatable)
   --reload            return full article JSON (reload=true query param)
 
-helpscout docs article upload --collection <id> --name <title> [--text <html>] [--status <s>]
-helpscout docs article update <id> [--name] [--text] [--status]
+helpscout docs article upload --collection <id> --file <path> [--name] [--category] [--slug] [--type html|text|markdown] [--reload]
+helpscout docs article update <id> [--name] [--text] [--status] [--slug] [--category <id...>] [--related <id...>] [--keyword <word...>] [--clear-categories] [--clear-related] [--clear-keywords] [--reload]
 helpscout docs article update-view-count <id>
 helpscout docs article save-draft <id>
 helpscout docs article delete-draft <id>
@@ -261,17 +268,17 @@ helpscout docs article delete <id>
 ### Docs — Collections
 
 ```
-helpscout docs collection list [--site <id>] [--visibility public|private] [--all]
+helpscout docs collection list [--site <id>] [--visibility public|private] [--sort] [--order] [--all]
 helpscout docs collection get <id>
 helpscout docs collection create --site <id> --name <name> [--visibility] [--reload]
-helpscout docs collection update <id> [--name] [--visibility]
+helpscout docs collection update <id> [--name] [--visibility] [--order] [--description] [--site <id>] [--reload]
 helpscout docs collection delete <id>
 ```
 
 ### Docs — Categories
 
 ```
-helpscout docs category list --collection <id> [--all]
+helpscout docs category list --collection <id> [--sort] [--order] [--all]
 helpscout docs category get <id>
 helpscout docs category create --collection <id> --name <name> [--slug] [--order]
 helpscout docs category update <id> [--name] [--slug] [--order]
@@ -286,7 +293,7 @@ helpscout docs redirect list --site <id> [--all]
 helpscout docs redirect get <id>
 helpscout docs redirect find --site <id> --url <path>
 helpscout docs redirect create --site <id> --from <path> --to <url>
-helpscout docs redirect update <id> [--from] [--to]
+helpscout docs redirect update <id> [--site <id>] [--url-mapping <path>] [--redirect <url>] [--reload]
 helpscout docs redirect delete <id>
 ```
 
@@ -295,11 +302,11 @@ helpscout docs redirect delete <id>
 ```
 helpscout docs site list [--all]
 helpscout docs site get <id>
-helpscout docs site create --title <title> --subdomain <name>
-helpscout docs site update <id> [--title] [--subdomain]
+helpscout docs site create --title <title> --subdomain <name> [--status] [--cname] [--has-public-site] [--logo-url] [--home-url] [--bg-color] [--has-contact-form] [--mailbox-id] [--contact-email] [--style-sheet-url] [--header-code] [--reload]
+helpscout docs site update <id> [same site body options as create] [--reload]
 helpscout docs site delete <id>
 helpscout docs site restrictions get <siteId>
-helpscout docs site restrictions update <siteId> --json '<{...}>'
+helpscout docs site restrictions update <siteId> [--enabled|--disabled] [--authentication CALLBACK] [--sign-in-url <url>]
 ```
 
 ### Docs — Assets
@@ -309,7 +316,7 @@ helpscout docs asset create-article --file <path> [--width] [--height]
 helpscout docs asset create-settings --file <path>
 ```
 
-Endpoint coverage is tracked in `docs/docs-api-endpoints.json`. Run `npm run scrape:docs-api` to refresh metadata from developer.helpscout.com.
+Endpoint and field coverage is tracked in `docs/docs-api-endpoints.json` and `src/docs-api-field-map.js`. Run `npm run scrape:docs-api` to refresh metadata from developer.helpscout.com.
 
 ## Common Patterns
 
