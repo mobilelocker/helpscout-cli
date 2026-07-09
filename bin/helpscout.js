@@ -18,6 +18,10 @@ import { makeTagCommand } from '../src/commands/inbox/tags.js';
 import { makeWebhookCommand } from '../src/commands/inbox/webhooks.js';
 import { makeArticleCommand } from '../src/commands/docs/articles.js';
 import { makeCollectionCommand } from '../src/commands/docs/collections.js';
+import { makeCategoryCommand } from '../src/commands/docs/categories.js';
+import { makeRedirectCommand } from '../src/commands/docs/redirects.js';
+import { makeSiteCommand } from '../src/commands/docs/sites.js';
+import { makeAssetCommand } from '../src/commands/docs/assets.js';
 
 const program = new Command();
 
@@ -47,9 +51,13 @@ program.addCommand(inbox);
 
 // ─── helpscout docs ───────────────────────────────────────────────────────────
 const docsCmd = new Command('docs');
-docsCmd.description('Docs API v1 — articles and collections');
+docsCmd.description('Docs API v1 — articles, collections, categories, and more');
 docsCmd.addCommand(makeArticleCommand());
 docsCmd.addCommand(makeCollectionCommand());
+docsCmd.addCommand(makeCategoryCommand());
+docsCmd.addCommand(makeRedirectCommand());
+docsCmd.addCommand(makeSiteCommand());
+docsCmd.addCommand(makeAssetCommand());
 program.addCommand(docsCmd);
 
 // Global error handler — unhandled rejections shouldn't print a stack trace

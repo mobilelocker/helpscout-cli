@@ -1,0 +1,390 @@
+{
+  "source": "https://developer.helpscout.com/docs-api/",
+  "scrapedAt": "2026-07-09",
+  "groups": [
+    {
+      "name": "Articles",
+      "endpoints": [
+        {
+          "id": "articles.list",
+          "method": "GET",
+          "path": "/collections/{collectionId}/articles",
+          "altPaths": ["/categories/{categoryId}/articles"],
+          "responsePattern": "json-paged",
+          "cliCommand": "docs article list",
+          "mcpTool": "list_articles",
+          "implemented": true
+        },
+        {
+          "id": "articles.search",
+          "method": "GET",
+          "path": "/search/articles",
+          "responsePattern": "json-paged",
+          "cliCommand": "docs article search",
+          "mcpTool": "search_articles",
+          "implemented": true
+        },
+        {
+          "id": "articles.list-related",
+          "method": "GET",
+          "path": "/articles/{articleId}/related",
+          "responsePattern": "json-paged",
+          "cliCommand": "docs article list-related",
+          "mcpTool": "list_related_articles",
+          "implemented": true
+        },
+        {
+          "id": "articles.list-revisions",
+          "method": "GET",
+          "path": "/articles/{articleId}/revisions",
+          "responsePattern": "json-paged",
+          "cliCommand": "docs article list-revisions",
+          "mcpTool": "list_article_revisions",
+          "implemented": true
+        },
+        {
+          "id": "articles.get",
+          "method": "GET",
+          "path": "/articles/{articleId}",
+          "responsePattern": "json",
+          "cliCommand": "docs article get",
+          "mcpTool": "get_article",
+          "implemented": true
+        },
+        {
+          "id": "articles.get-revision",
+          "method": "GET",
+          "path": "/articles/{articleId}/revisions/{revisionId}",
+          "responsePattern": "json",
+          "cliCommand": "docs article get-revision",
+          "mcpTool": "get_article_revision",
+          "implemented": true
+        },
+        {
+          "id": "articles.create",
+          "method": "POST",
+          "path": "/articles",
+          "responsePattern": "201-location",
+          "cliCommand": "docs article create",
+          "mcpTool": "create_article",
+          "implemented": true
+        },
+        {
+          "id": "articles.update",
+          "method": "PUT",
+          "path": "/articles/{articleId}",
+          "responsePattern": "204-or-json",
+          "cliCommand": "docs article update",
+          "mcpTool": "update_article",
+          "implemented": true
+        },
+        {
+          "id": "articles.upload",
+          "method": "POST",
+          "path": "/articles/upload",
+          "responsePattern": "201-location",
+          "cliCommand": "docs article upload",
+          "mcpTool": "upload_article",
+          "implemented": true
+        },
+        {
+          "id": "articles.update-view-count",
+          "method": "PUT",
+          "path": "/articles/{articleId}/view-count",
+          "responsePattern": "204",
+          "cliCommand": "docs article update-view-count",
+          "mcpTool": "update_article_view_count",
+          "implemented": true
+        },
+        {
+          "id": "articles.delete",
+          "method": "DELETE",
+          "path": "/articles/{articleId}",
+          "responsePattern": "204",
+          "cliCommand": "docs article delete",
+          "mcpTool": "delete_article",
+          "implemented": true
+        },
+        {
+          "id": "articles.save-draft",
+          "method": "PUT",
+          "path": "/articles/{articleId}/draft",
+          "responsePattern": "204",
+          "cliCommand": "docs article save-draft",
+          "mcpTool": "save_article_draft",
+          "implemented": true
+        },
+        {
+          "id": "articles.delete-draft",
+          "method": "DELETE",
+          "path": "/articles/{articleId}/draft",
+          "responsePattern": "204",
+          "cliCommand": "docs article delete-draft",
+          "mcpTool": "delete_article_draft",
+          "implemented": true
+        }
+      ]
+    },
+    {
+      "name": "Assets",
+      "endpoints": [
+        {
+          "id": "assets.create-article",
+          "method": "POST",
+          "path": "/assets/article",
+          "contentType": "multipart/form-data",
+          "responsePattern": "201-json",
+          "cliCommand": "docs asset create-article",
+          "mcpTool": "create_article_asset",
+          "implemented": true
+        },
+        {
+          "id": "assets.create-settings",
+          "method": "POST",
+          "path": "/assets/settings",
+          "contentType": "multipart/form-data",
+          "responsePattern": "201-json",
+          "cliCommand": "docs asset create-settings",
+          "mcpTool": "create_settings_asset",
+          "implemented": true
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "endpoints": [
+        {
+          "id": "categories.list",
+          "method": "GET",
+          "path": "/collections/{collectionId}/categories",
+          "responsePattern": "json-paged",
+          "cliCommand": "docs category list",
+          "mcpTool": "list_categories",
+          "implemented": true
+        },
+        {
+          "id": "categories.get",
+          "method": "GET",
+          "path": "/categories/{categoryId}",
+          "responsePattern": "json",
+          "cliCommand": "docs category get",
+          "mcpTool": "get_category",
+          "implemented": true
+        },
+        {
+          "id": "categories.create",
+          "method": "POST",
+          "path": "/categories",
+          "responsePattern": "201-location",
+          "cliCommand": "docs category create",
+          "mcpTool": "create_category",
+          "implemented": true
+        },
+        {
+          "id": "categories.update",
+          "method": "PUT",
+          "path": "/categories/{categoryId}",
+          "responsePattern": "204-or-json",
+          "cliCommand": "docs category update",
+          "mcpTool": "update_category",
+          "implemented": true
+        },
+        {
+          "id": "categories.order",
+          "method": "PUT",
+          "path": "/collections/{collectionId}/categories/order",
+          "responsePattern": "204",
+          "cliCommand": "docs category order",
+          "mcpTool": "update_category_order",
+          "implemented": true
+        },
+        {
+          "id": "categories.delete",
+          "method": "DELETE",
+          "path": "/categories/{categoryId}",
+          "responsePattern": "204",
+          "cliCommand": "docs category delete",
+          "mcpTool": "delete_category",
+          "implemented": true
+        }
+      ]
+    },
+    {
+      "name": "Collections",
+      "endpoints": [
+        {
+          "id": "collections.list",
+          "method": "GET",
+          "path": "/collections",
+          "responsePattern": "json-paged",
+          "cliCommand": "docs collection list",
+          "mcpTool": "list_collections",
+          "implemented": true
+        },
+        {
+          "id": "collections.get",
+          "method": "GET",
+          "path": "/collections/{collectionId}",
+          "responsePattern": "json",
+          "cliCommand": "docs collection get",
+          "mcpTool": "get_collection",
+          "implemented": true
+        },
+        {
+          "id": "collections.create",
+          "method": "POST",
+          "path": "/collections",
+          "responsePattern": "201-location",
+          "cliCommand": "docs collection create",
+          "mcpTool": "create_collection",
+          "implemented": true
+        },
+        {
+          "id": "collections.update",
+          "method": "PUT",
+          "path": "/collections/{collectionId}",
+          "responsePattern": "204-or-json",
+          "cliCommand": "docs collection update",
+          "mcpTool": "update_collection",
+          "implemented": true
+        },
+        {
+          "id": "collections.delete",
+          "method": "DELETE",
+          "path": "/collections/{collectionId}",
+          "responsePattern": "204",
+          "cliCommand": "docs collection delete",
+          "mcpTool": "delete_collection",
+          "implemented": true
+        }
+      ]
+    },
+    {
+      "name": "Redirects",
+      "endpoints": [
+        {
+          "id": "redirects.list",
+          "method": "GET",
+          "path": "/redirects/site/{siteId}",
+          "responsePattern": "json-paged",
+          "cliCommand": "docs redirect list",
+          "mcpTool": "list_redirects",
+          "implemented": true
+        },
+        {
+          "id": "redirects.get",
+          "method": "GET",
+          "path": "/redirects/{redirectId}",
+          "responsePattern": "json",
+          "cliCommand": "docs redirect get",
+          "mcpTool": "get_redirect",
+          "implemented": true
+        },
+        {
+          "id": "redirects.find",
+          "method": "GET",
+          "path": "/redirects/find",
+          "responsePattern": "json",
+          "cliCommand": "docs redirect find",
+          "mcpTool": "find_redirect",
+          "implemented": true
+        },
+        {
+          "id": "redirects.create",
+          "method": "POST",
+          "path": "/redirects",
+          "responsePattern": "201-location",
+          "cliCommand": "docs redirect create",
+          "mcpTool": "create_redirect",
+          "implemented": true
+        },
+        {
+          "id": "redirects.update",
+          "method": "PUT",
+          "path": "/redirects/{redirectId}",
+          "responsePattern": "204-or-json",
+          "cliCommand": "docs redirect update",
+          "mcpTool": "update_redirect",
+          "implemented": true
+        },
+        {
+          "id": "redirects.delete",
+          "method": "DELETE",
+          "path": "/redirects/{redirectId}",
+          "responsePattern": "204",
+          "cliCommand": "docs redirect delete",
+          "mcpTool": "delete_redirect",
+          "implemented": true
+        }
+      ]
+    },
+    {
+      "name": "Sites",
+      "endpoints": [
+        {
+          "id": "sites.list",
+          "method": "GET",
+          "path": "/sites",
+          "responsePattern": "json-paged",
+          "cliCommand": "docs site list",
+          "mcpTool": "list_sites",
+          "implemented": true
+        },
+        {
+          "id": "sites.get",
+          "method": "GET",
+          "path": "/sites/{siteId}",
+          "responsePattern": "json",
+          "cliCommand": "docs site get",
+          "mcpTool": "get_site",
+          "implemented": true
+        },
+        {
+          "id": "sites.create",
+          "method": "POST",
+          "path": "/sites",
+          "responsePattern": "201-location",
+          "cliCommand": "docs site create",
+          "mcpTool": "create_site",
+          "implemented": true
+        },
+        {
+          "id": "sites.update",
+          "method": "PUT",
+          "path": "/sites/{siteId}",
+          "responsePattern": "204-or-json",
+          "cliCommand": "docs site update",
+          "mcpTool": "update_site",
+          "implemented": true
+        },
+        {
+          "id": "sites.delete",
+          "method": "DELETE",
+          "path": "/sites/{siteId}",
+          "responsePattern": "204",
+          "cliCommand": "docs site delete",
+          "mcpTool": "delete_site",
+          "implemented": true
+        },
+        {
+          "id": "sites.get-restrictions",
+          "method": "GET",
+          "path": "/sites/{siteId}/restrictions",
+          "responsePattern": "json",
+          "cliCommand": "docs site restrictions get",
+          "mcpTool": "get_site_restrictions",
+          "implemented": true
+        },
+        {
+          "id": "sites.update-restrictions",
+          "method": "PUT",
+          "path": "/sites/{siteId}/restrictions",
+          "responsePattern": "json",
+          "cliCommand": "docs site restrictions update",
+          "mcpTool": "update_site_restrictions",
+          "implemented": true
+        }
+      ]
+    }
+  ]
+}

@@ -147,3 +147,42 @@ test('mailbox requests include correct User-Agent header', async () => {
   await mailbox.get('/conversations');
   assert.equal(fetchStub.mock.calls[0].arguments[1].headers['User-Agent'], USER_AGENT);
 });
+
+function makeEmptyBodyFetchStub(responses) {
+  let callIndex = 0;
+  return mock.fn(async () => {
+    const resp = responses[callIndex++] ?? responses[responses.length - 1];
+    const text = resp.text ?? (resp.body !== undefined ? JSON.stringify(resp.body) : '');
+    return {
+      ok: resp.ok ?? true,
+      status: resp.status ?? 200,
+      headers: { get: (h) => resp.headers?.[h] ?? null },
+      json: async () => (text.trim() ? JSON.parse(text) : null),
+      text: async () => text,
+    };
+  });
+}
+
+test('mailbox.post returns id from Resource-ID header on 201 empty body', async () => {
+  globalThis.fetch = makeEmptyBodyFetchStub([
+    {
+      status: 201,
+      headers: {
+        'Resource-ID': '456',
+        Location: 'https://api.helpscout.net/v2/conversations/456',
+      },
+      text: '',
+    },
+  ]);
+
+  const { mailbox } = await import('../src/mailbox-client.js');
+  const result = await mailbox.post('/conversations', {
+    subject: 'Test',
+    mailboxId: 1,
+    customer: { email: 'a@b.com' },
+  });
+  assert.deepEqual(result, {
+    id: 456,
+    location: 'https://api.helpscout.net/v2/conversations/456',
+  });
+});

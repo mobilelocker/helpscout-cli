@@ -36,3 +36,24 @@ test('search_articles with a broad query returns results', { skip }, async () =>
   const articles = result?.articles?.items ?? [];
   assert.ok(Array.isArray(articles));
 });
+
+test('article create returns id from Location header', { skip }, async () => {
+  const { docs } = await import('../../src/docs-client.js');
+  const collectionsResult = await docs.get('/collections');
+  const collections = collectionsResult?.collections?.items ?? [];
+  if (collections.length === 0) return;
+
+  const collectionId = collections[0].id;
+  const created = await docs.post('/articles', {
+    collectionId,
+    name: `CLI integration test ${Date.now()}`,
+    status: 'notpublished',
+  });
+  assert.ok(created?.id, 'create should return id from Location header');
+
+  const fetched = await docs.get(`/articles/${created.id}`);
+  const article = fetched?.article ?? fetched;
+  assert.equal(article.id, created.id);
+
+  await docs.delete(`/articles/${created.id}`);
+});

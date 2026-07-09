@@ -92,3 +92,69 @@ test('docs.get sends correct Basic Auth header', async () => {
   const expected = 'Basic ' + Buffer.from('mykey:X').toString('base64');
   assert.equal(fetchStub.mock.calls[0].arguments[1].headers.Authorization, expected);
 });
+
+function makeEmptyBodyFetchStub(responses) {
+  let callIndex = 0;
+  return mock.fn(async () => {
+    const resp = responses[callIndex++] ?? responses[responses.length - 1];
+    const text = resp.text ?? (resp.body !== undefined ? JSON.stringify(resp.body) : '');
+    return {
+      ok: resp.ok ?? true,
+      status: resp.status ?? 200,
+      headers: { get: (h) => resp.headers?.[h] ?? null },
+      json: async () => (text.trim() ? JSON.parse(text) : null),
+      text: async () => text,
+    };
+  });
+}
+
+test('docs.post returns id from Location header on 201 empty body', async () => {
+  globalThis.fetch = makeEmptyBodyFetchStub([
+    {
+      status: 201,
+      headers: { Location: 'https://docsapi.helpscout.net/v1/articles/abc123' },
+      text: '',
+    },
+  ]);
+  process.env.HELPSCOUT_API_KEY = 'test-api-key';
+
+  const { docs } = await import('../src/docs-client.js');
+  const result = await docs.post('/articles', { collectionId: 'c1', name: 'Test' });
+  assert.deepEqual(result, {
+    id: 'abc123',
+    location: 'https://docsapi.helpscout.net/v1/articles/abc123',
+  });
+});
+
+test('docs.post passes reload=true query param', async () => {
+  const fetchStub = makeEmptyBodyFetchStub([
+    {
+      status: 201,
+      body: { article: { id: 'full-id', name: 'Reloaded' } },
+    },
+  ]);
+  globalThis.fetch = fetchStub;
+  process.env.HELPSCOUT_API_KEY = 'test-api-key';
+
+  const { docs } = await import('../src/docs-client.js');
+  const result = await docs.post(
+    '/articles',
+    { collectionId: 'c1', name: 'Test' },
+    { reload: 'true' },
+  );
+  assert.deepEqual(result, { id: 'full-id', name: 'Reloaded' });
+  const url = fetchStub.mock.calls[0].arguments[0];
+  assert.match(url, /reload=true/);
+});
+
+test('docs.upload returns JSON body for asset upload', async () => {
+  const assetBody = { filelink: 'https://cdn.example.com/img.png', filename: 'img.png' };
+  globalThis.fetch = makeEmptyBodyFetchStub([{ status: 201, body: assetBody }]);
+  process.env.HELPSCOUT_API_KEY = 'test-api-key';
+
+  const { docs } = await import('../src/docs-client.js');
+  const form = new FormData();
+  form.append('file', new Blob(['x']), 'img.png');
+  const result = await docs.upload('/assets/article', form);
+  assert.deepEqual(result, assetBody);
+});

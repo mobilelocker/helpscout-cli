@@ -6,7 +6,7 @@
  * Pagination: HAL _embedded with page.totalPages
  */
 import { getAccessToken, forceRefreshToken } from './auth.js';
-import { USER_AGENT, parseJsonBody } from './http.js';
+import { USER_AGENT, parseJsonBody, parseCreatedResponse } from './http.js';
 
 const BASE_URL = 'https://api.helpscout.net/v2';
 const MAX_RETRIES = 3;
@@ -68,7 +68,8 @@ async function request(method, path, { body, params } = {}) {
       throw Object.assign(new Error(message), { status: res.status });
     }
 
-    return parseJsonBody(res);
+    const parsed = await parseJsonBody(res);
+    return parseCreatedResponse(res, parsed) ?? parsed;
   }
 
   throw new Error('Exceeded maximum retries due to rate limiting.');

@@ -23,13 +23,29 @@ To add it to a specific project instead, add to your project's `.mcp.json` (Clau
 }
 ```
 
-The MCP server exposes 29 tools covering all operations below. Use the MCP tools directly instead of shelling out to the CLI when available.
+The MCP server exposes 61 tools covering Mailbox API and full Docs API operations. Use the MCP tools directly instead of shelling out to the CLI when available.
 
 ## MCP Tools
 
-`auth_status`, `auth_login`, `auth_logout`, `list_conversations`, `get_conversation`, `create_conversation`, `update_conversation`, `delete_conversation`, `list_threads`, `reply_to_conversation`, `add_note`, `list_customers`, `get_customer`, `create_customer`, `update_customer`, `list_mailboxes`, `list_users`, `get_current_user`, `get_user_status`, `list_user_statuses`, `set_user_status`, `list_tags`, `list_articles`, `get_article`, `search_articles`, `create_article`, `update_article`, `delete_article`, `list_collections`, `get_collection`
+**Auth:** `auth_status`, `auth_login`, `auth_logout`
 
-All list tools (`list_conversations`, `list_threads`, `list_customers`, `list_mailboxes`, `list_users`, `list_user_statuses`, `list_tags`, `list_articles`, `search_articles`, `list_collections`) accept an optional `markdown: true` parameter to return a GitHub Flavored Markdown table instead of JSON — useful when displaying results directly to a user in the conversation.
+**Inbox:** `list_conversations`, `get_conversation`, `create_conversation`, `update_conversation`, `delete_conversation`, `list_threads`, `reply_to_conversation`, `add_note`, `list_customers`, `get_customer`, `create_customer`, `update_customer`, `list_mailboxes`, `list_users`, `get_current_user`, `get_user_status`, `list_user_statuses`, `set_user_status`, `list_tags`
+
+**Docs — Articles:** `list_articles`, `get_article`, `search_articles`, `list_related_articles`, `list_article_revisions`, `get_article_revision`, `create_article`, `upload_article`, `update_article`, `update_article_view_count`, `save_article_draft`, `delete_article_draft`, `delete_article`
+
+**Docs — Collections:** `list_collections`, `get_collection`, `create_collection`, `update_collection`, `delete_collection`
+
+**Docs — Categories:** `list_categories`, `get_category`, `create_category`, `update_category`, `update_category_order`, `delete_category`
+
+**Docs — Redirects:** `list_redirects`, `get_redirect`, `find_redirect`, `create_redirect`, `update_redirect`, `delete_redirect`
+
+**Docs — Sites:** `list_sites`, `get_site`, `create_site`, `update_site`, `delete_site`, `get_site_restrictions`, `update_site_restrictions`
+
+**Docs — Assets:** `create_article_asset`, `create_settings_asset`
+
+All list tools accept an optional `markdown: true` parameter to return a GitHub Flavored Markdown table instead of JSON — useful when displaying results directly to a user in the conversation.
+
+Create tools return `{ id, location }` when the API responds with `201` and a `Location` or `Resource-ID` header. Pass `reload: true` on Docs article/collection create to receive the full resource in one call.
 
 ## Environment Variables
 
@@ -215,43 +231,85 @@ helpscout inbox webhook delete <id>
 
 ```
 helpscout docs article list [options]
-  --collection <id>
-  --status <s>       published (default) | notpublished
+  --collection <id>   list articles in a collection (required unless --category)
+  --category <id>     list articles in a category
+  --status <s>        published (default) | notpublished
   --page <n>
   --all
 
 helpscout docs article get <id>
-
-helpscout docs article search [options]
-  --query <q>        (required)
-  --collection <id>
-  --status <s>
-  --all
+helpscout docs article search --query <q> [--collection <id>] [--status <s>] [--all]
+helpscout docs article list-related <id> [--all]
+helpscout docs article list-revisions <id> [--all]
+helpscout docs article get-revision <articleId> <revisionId>
 
 helpscout docs article create [options]
-  --collection <id>  (required)
-  --name <title>     (required)
+  --collection <id>   (required)
+  --name <title>      (required)
   --text <html>
-  --status <s>       notpublished (default) | published
+  --status <s>        notpublished (default) | published
+  --reload            return full article JSON (reload=true query param)
 
-helpscout docs article update <id> [options]
-  --name <title>
-  --text <html>
-  --status <s>       published | notpublished
-
+helpscout docs article upload --collection <id> --name <title> [--text <html>] [--status <s>]
+helpscout docs article update <id> [--name] [--text] [--status]
+helpscout docs article update-view-count <id>
+helpscout docs article save-draft <id>
+helpscout docs article delete-draft <id>
 helpscout docs article delete <id>
 ```
 
 ### Docs — Collections
 
 ```
-helpscout docs collection list [options]
-  --site <id>
-  --visibility <v>   public | private
-  --all
-
+helpscout docs collection list [--site <id>] [--visibility public|private] [--all]
 helpscout docs collection get <id>
+helpscout docs collection create --site <id> --name <name> [--visibility] [--reload]
+helpscout docs collection update <id> [--name] [--visibility]
+helpscout docs collection delete <id>
 ```
+
+### Docs — Categories
+
+```
+helpscout docs category list --collection <id> [--all]
+helpscout docs category get <id>
+helpscout docs category create --collection <id> --name <name> [--slug] [--order]
+helpscout docs category update <id> [--name] [--slug] [--order]
+helpscout docs category order --collection <id> --json '<[{id,order}]>'
+helpscout docs category delete <id>
+```
+
+### Docs — Redirects
+
+```
+helpscout docs redirect list --site <id> [--all]
+helpscout docs redirect get <id>
+helpscout docs redirect find --site <id> --url <path>
+helpscout docs redirect create --site <id> --from <path> --to <url>
+helpscout docs redirect update <id> [--from] [--to]
+helpscout docs redirect delete <id>
+```
+
+### Docs — Sites
+
+```
+helpscout docs site list [--all]
+helpscout docs site get <id>
+helpscout docs site create --title <title> --subdomain <name>
+helpscout docs site update <id> [--title] [--subdomain]
+helpscout docs site delete <id>
+helpscout docs site restrictions get <siteId>
+helpscout docs site restrictions update <siteId> --json '<{...}>'
+```
+
+### Docs — Assets
+
+```
+helpscout docs asset create-article --file <path> [--width] [--height]
+helpscout docs asset create-settings --file <path>
+```
+
+Endpoint coverage is tracked in `docs/docs-api-endpoints.json`. Run `npm run scrape:docs-api` to refresh metadata from developer.helpscout.com.
 
 ## Common Patterns
 
@@ -291,6 +349,6 @@ helpscout docs article list --collection <collection-id> --all
 
 ```sh
 helpscout docs article create --collection <collection-id> --name "My Article" --text "<p>Body here</p>"
-# Returns the new article object including its id
+# → { "id": "...", "location": "https://docsapi.helpscout.net/v1/articles/..." }
 helpscout docs article update <new-id> --status published
 ```

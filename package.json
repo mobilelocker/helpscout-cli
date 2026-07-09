@@ -1,6 +1,6 @@
 {
   "name": "helpscout-cli",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "description": "Help Scout CLI for Mailbox API v2 and Docs API v1",
   "author": "Mobile Locker <support@mobilelocker.com>",
   "license": "MIT",
@@ -13,6 +13,7 @@
   },
   "scripts": {
     "test": "node --test --test-concurrency=1",
+    "scrape:docs-api": "node scripts/scrape-docs-api-endpoints.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -43,6 +44,7 @@
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
     "lint-staged": "^17.0.8",
+    "playwright": "^1.52.0",
     "prettier": "^3.9.4",
     "simple-git-hooks": "^2.13.1"
   }

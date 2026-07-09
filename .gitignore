@@ -1,8 +1,9 @@
 # Dependencies
 node_modules/
 
-# Internal docs (scraped API reference + implementation plan — not for public release)
-/docs/
+# Internal docs (scraped API reference — catalog is committed)
+/docs/*
+!/docs/docs-api-endpoints.json
 
 # Build output
 dist/

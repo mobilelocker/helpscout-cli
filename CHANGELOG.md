@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.3.0] — 2026-07-09
+
+### Added
+
+- Full Docs API v1 parity — 39 endpoints across articles, assets, categories, collections, redirects, and sites with matching CLI commands and MCP tools (61 MCP tools total, up from 29)
+- Shared create-response parsing for `201` responses with empty bodies — Docs API `Location` header and Mailbox API `Resource-ID` header now yield `{ id, location }` on create
+- Optional `reload=true` on Docs article/collection create (CLI `--reload`, MCP `reload` param) to return the full resource without a follow-up GET
+- Multipart asset upload support (`docs asset create-article`, `docs asset create-settings`)
+- Endpoint catalog at `docs/docs-api-endpoints.json` and `npm run scrape:docs-api` Playwright scraper to refresh it
+- Coverage test ensuring catalog, CLI commands, and MCP tools stay in sync
+
+### Changed
+
+- Docs article list requires `--collection` or `--category` (matches API scoping)
+- MCP Docs tools moved to `src/mcp-server-docs.js` via `registerDocsTools()`
+- `create_conversation`, `create_customer`, and all Docs create MCP tools return resource IDs when the API provides them
+
 ## [1.2.2] — 2026-07-09
 
 ### Fixed
