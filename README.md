@@ -166,22 +166,23 @@ helpscout inbox webhook delete <id>
 ### Docs Articles
 
 ```sh
-# List published articles in a collection
+# List articles in a collection (default status: all)
 helpscout docs article list --collection <collection-id> --all
 
 # Search
-helpscout docs article search --query "getting started"
+helpscout docs article search --query "getting started" --site <site-id>
 
-# Create a draft (returns id from Location header), then publish
+# Create with categories (repeatable flags)
 helpscout docs article create \
   --collection <collection-id> \
   --name "New Feature Guide" \
-  --text "<p>Content here.</p>"
-
-# Or create with full body in one call
-helpscout docs article create --collection <id> --name "Guide" --reload
+  --text "<p>Content here.</p>" \
+  --category <category-id> \
+  --keyword "feature" \
+  --reload
 
 helpscout docs article update <id> --status published
+helpscout docs article update <id> --clear-categories   # null-clear arrays on update
 helpscout docs article delete <id>
 ```
 
@@ -197,8 +198,8 @@ helpscout docs category create --collection <id> --name "Getting Started"
 helpscout docs redirect list --site <site-id>
 helpscout docs redirect create --site <id> --from /old --to https://example.com/new
 
-helpscout docs site list
-helpscout docs site restrictions get <site-id>
+helpscout docs site create --title "Docs" --subdomain docs --bg-color "#444444" --has-contact-form
+helpscout docs site restrictions update <site-id> --enabled --authentication CALLBACK --sign-in-url https://example.com/signin
 ```
 
 ### Docs Assets

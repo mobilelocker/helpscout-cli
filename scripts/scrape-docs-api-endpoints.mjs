@@ -77,9 +77,42 @@ function extractPath(text) {
   return match?.[1] ?? null;
 }
 
-async function scrapePages(browser) {
+function extractAcceptedFields(text) {
+  const fields = [];
+  const section = text.match(/Accepted Fields[\s\S]*?(?=\n[A-Z][^\n]*\n=|$)/i);
+  if (!section) return fields;
+
+  for (const line of section[0].split('\n')) {
+    const match = line.match(/^\s*([a-zA-Z][a-zA-Z0-9]*)\s+/);
+    if (match && !['Field', 'Type', 'Required', 'Description'].includes(match[1])) {
+      fields.push(match[1]);
+    }
+  }
+  return [...new Set(fields)];
+}
+
+function extractQueryParams(text) {
+  const params = [];
+  const section = text.match(/Request[\s\S]*?(?=Response|Accepted Fields|$)/i);
+  if (!section) return params;
+
+  for (const match of section[0].matchAll(/\?([a-zA-Z]+)=/g)) {
+    params.push(match[1]);
+  }
+  return [...new Set(params)];
+}
+
+async function scrapePages(browser, catalog) {
   const page = await browser.newPage();
   const scraped = [];
+  const endpointBySlug = new Map();
+
+  for (const group of catalog.groups) {
+    for (const endpoint of group.endpoints) {
+      const slugGuess = endpoint.id.replace('.', '/');
+      endpointBySlug.set(slugGuess, endpoint);
+    }
+  }
 
   for (const slug of SIDEBAR_PATHS) {
     const url = `${BASE}${slug}`;
@@ -87,12 +120,16 @@ async function scrapePages(browser) {
     const bodyText = await page.locator('main, article, .content, body').first().innerText();
     const method = extractMethod(bodyText);
     const apiPath = extractPath(bodyText);
+    const bodyFields = extractAcceptedFields(bodyText);
+    const queryParams = extractQueryParams(bodyText);
     scraped.push({
       slug,
       url,
       method,
       path: apiPath,
       responsePattern: inferResponsePattern(bodyText),
+      bodyFields: bodyFields.length ? bodyFields : undefined,
+      queryParams: queryParams.length ? queryParams : undefined,
     });
     process.stderr.write(`Scraped ${slug}\n`);
   }
@@ -116,7 +153,7 @@ async function main() {
   const browser = await playwright.chromium.launch({ headless: true });
 
   try {
-    const scraped = await scrapePages(browser);
+    const scraped = await scrapePages(browser, existing);
     const endpointCount = existing.groups.reduce((n, g) => n + g.endpoints.length, 0);
 
     if (scraped.length !== endpointCount) {
