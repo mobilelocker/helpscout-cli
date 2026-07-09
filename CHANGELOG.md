@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1] — 2026-07-09
+
+### Fixed
+
+- `install.sh` no longer fails on re-run when the helpscout MCP server is already registered in Claude Code — `register-mcp.js` checks the existing config and skips when the command path is unchanged, or removes and re-adds when it needs updating
+
 ## [1.2.0] — 2026-07-09
 
 ### Added

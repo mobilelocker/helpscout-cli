@@ -10,6 +10,7 @@ import {
   cursorMcpConfigPath,
   isCursorInstalled,
   mergeHelpscoutServer,
+  parseClaudeMcpGetOutput,
   readMcpConfig,
   registerCursorMcp,
   registerMcp,
@@ -19,6 +20,21 @@ import {
 function makeHome() {
   return mkdtempSync(path.join(tmpdir(), 'helpscout-mcp-'));
 }
+
+test('parseClaudeMcpGetOutput extracts command from claude mcp get output', () => {
+  const output = `helpscout:
+  Scope: User config (available in all your projects)
+  Status: ✔ Connected
+  Type: stdio
+  Command: /usr/local/bin/helpscout-mcp
+  Args:
+`;
+  assert.equal(parseClaudeMcpGetOutput(output), '/usr/local/bin/helpscout-mcp');
+});
+
+test('parseClaudeMcpGetOutput returns null when command is missing', () => {
+  assert.equal(parseClaudeMcpGetOutput('helpscout:\n  Status: missing'), null);
+});
 
 test('cursorMcpConfigPath returns ~/.cursor/mcp.json', () => {
   const home = '/tmp/test-home';

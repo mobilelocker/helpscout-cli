@@ -5,7 +5,7 @@
  * Usage: node scripts/register-mcp.js --bin /usr/local/bin/helpscout-mcp
  */
 import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs';
-import { execSync, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -83,10 +83,31 @@ export function registerCursorMcp(binPath, homeDir = os.homedir()) {
   return configPath;
 }
 
+export function parseClaudeMcpGetOutput(output) {
+  const match = output.match(/^\s*Command:\s*(.+)$/m);
+  return match?.[1]?.trim() ?? null;
+}
+
+export function getClaudeMcpCommand() {
+  const result = spawnSync('claude', ['mcp', 'get', SERVER_NAME], { encoding: 'utf8' });
+  if (result.status !== 0) return null;
+  return parseClaudeMcpGetOutput(result.stdout);
+}
+
 export function registerClaudeMcp(binPath) {
-  execSync(`claude mcp add ${SERVER_NAME} -s user -- ${binPath}`, {
+  const existing = getClaudeMcpCommand();
+  if (existing === binPath) return 'unchanged';
+
+  spawnSync('claude', ['mcp', 'remove', SERVER_NAME, '-s', 'user'], { stdio: 'ignore' });
+
+  const result = spawnSync('claude', ['mcp', 'add', SERVER_NAME, '-s', 'user', '--', binPath], {
     stdio: 'inherit',
   });
+  if (result.status !== 0) {
+    throw new Error(`claude mcp add failed with exit code ${result.status}`);
+  }
+
+  return existing ? 'updated' : 'registered';
 }
 
 export function registerMcp(binPath, options = {}) {
@@ -97,8 +118,7 @@ export function registerMcp(binPath, options = {}) {
   };
 
   if (options.registerClaude ?? commandExists('claude')) {
-    registerClaudeMcp(binPath);
-    results.claude = 'registered';
+    results.claude = registerClaudeMcp(binPath);
   }
 
   if (options.registerCursor ?? isCursorInstalled(homeDir)) {
@@ -125,6 +145,10 @@ function main() {
 
   if (results.claude === 'registered') {
     console.log('  Claude Code: registered (user scope)');
+  } else if (results.claude === 'updated') {
+    console.log('  Claude Code: updated (user scope)');
+  } else if (results.claude === 'unchanged') {
+    console.log('  Claude Code: already registered (user scope)');
   } else {
     console.log('  Claude Code: skipped (claude not found)');
   }
