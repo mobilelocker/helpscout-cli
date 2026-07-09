@@ -293,7 +293,7 @@ helpscout docs category delete <id>
 helpscout docs redirect list --site <id> [--all]
 helpscout docs redirect get <id>
 helpscout docs redirect find --site <id> --url <path>
-helpscout docs redirect create --site <id> --from <path> --to <url>
+helpscout docs redirect create --site <id> --url-mapping <path> --redirect <url>
 helpscout docs redirect update <id> [--site <id>] [--url-mapping <path>] [--redirect <url>] [--reload]
 helpscout docs redirect delete <id>
 ```
