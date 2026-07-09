@@ -10,6 +10,16 @@ export const nullableStringArray = () =>
     .optional()
     .describe('Array of IDs/strings, or null to clear (update only)');
 
+/** Update Article `categories` — https://developer.helpscout.com/docs-api/articles/update/ */
+export const articleUpdateCategoriesField = () =>
+  z
+    .array(z.string())
+    .nullable()
+    .optional()
+    .describe(
+      'Category IDs. Omit to leave the current list unchanged. Pass null (or clearCategories: true) to move the article to Uncategorized — the API rejects the Uncategorized category id in an array. Pass an array to associate the article only with those categories.',
+    );
+
 export const siteOptionalFields = {
   title: z.string().optional(),
   subDomain: z.string().optional(),
