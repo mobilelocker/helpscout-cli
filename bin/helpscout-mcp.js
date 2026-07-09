@@ -5,7 +5,10 @@
  *
  * Usage in .mcp.json:
  *   { "mcpServers": { "helpscout": { "command": "/usr/local/bin/helpscout-mcp" } } }
+ *
+ * Credentials: set HELPSCOUT_* env vars or put them in ~/.config/helpscout/env
  */
+import '../src/load-env.js';
 import { startMcpServer } from '../src/mcp-server.js';
 
 startMcpServer().catch((err) => {

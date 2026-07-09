@@ -2,7 +2,10 @@
 /**
  * helpscout — Help Scout CLI
  * Mailbox API v2 (helpscout inbox ...) and Docs API v1 (helpscout docs ...)
+ *
+ * Credentials: set HELPSCOUT_* env vars or put them in ~/.config/helpscout/env
  */
+import '../src/load-env.js';
 import { Command } from 'commander';
 import pkg from '../package.json' with { type: 'json' };
 import { makeAuthCommand } from '../src/commands/auth.js';

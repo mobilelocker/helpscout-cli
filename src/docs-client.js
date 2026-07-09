@@ -81,6 +81,23 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Docs list/search responses wrap items in a resource envelope, e.g.
+ * { articles: { page, pages, count, items } } or { collections: { ... } }.
+ */
+export function extractPagedItems(data) {
+  if (!data) return { items: [], pages: 1 };
+  if (Array.isArray(data.items)) {
+    return { items: data.items, pages: data.pages ?? 1 };
+  }
+  for (const value of Object.values(data)) {
+    if (value && typeof value === 'object' && Array.isArray(value.items)) {
+      return { items: value.items, pages: value.pages ?? 1 };
+    }
+  }
+  return { items: [], pages: 1 };
+}
+
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 export const docs = {
@@ -101,11 +118,10 @@ export const docs = {
 
     while (true) {
       const data = await request('GET', path, { params: { ...params, page } });
-      const items = data?.items ?? [];
+      const { items, pages } = extractPagedItems(data);
       results.push(...items);
 
-      const totalPages = data?.pages ?? 1;
-      if (page >= totalPages) break;
+      if (page >= pages) break;
       page++;
     }
 

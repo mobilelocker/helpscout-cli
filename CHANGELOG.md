@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2] — 2026-07-09
+
+### Fixed
+
+- Docs `--all` pagination (`docs article search/list`, `docs collection list`, and MCP list/search tools with `all: true`) returned no results — `docs.getAll()` now unwraps nested API envelopes such as `{ articles: { items, pages } }` instead of expecting top-level `items`
+- MCP server failed for Docs API calls in Cursor and Cursor CLI because subprocesses do not inherit shell profile env vars — credentials are loaded from `~/.config/helpscout/env` at startup, `install.sh` seeds that file on first install, and Cursor registration includes `envFile`
+
 ## [1.2.1] — 2026-07-09
 
 ### Fixed

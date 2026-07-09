@@ -49,12 +49,19 @@ export function readMcpConfig(configPath) {
   return parsed;
 }
 
-export function mergeHelpscoutServer(config, binPath) {
+export function helpscoutEnvFilePath(homeDir = os.homedir()) {
+  return path.join(homeDir, '.config', 'helpscout', 'env');
+}
+
+export function mergeHelpscoutServer(config, binPath, homeDir = os.homedir()) {
   return {
     ...config,
     mcpServers: {
       ...config.mcpServers,
-      [SERVER_NAME]: { command: binPath },
+      [SERVER_NAME]: {
+        command: binPath,
+        envFile: helpscoutEnvFilePath(homeDir),
+      },
     },
   };
 }
@@ -78,7 +85,7 @@ export function registerCursorMcp(binPath, homeDir = os.homedir()) {
     });
   }
 
-  const merged = mergeHelpscoutServer(config, binPath);
+  const merged = mergeHelpscoutServer(config, binPath, homeDir);
   writeMcpConfig(configPath, merged);
   return configPath;
 }

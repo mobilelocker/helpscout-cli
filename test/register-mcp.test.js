@@ -55,7 +55,10 @@ test('registerCursorMcp creates fresh mcp.json', () => {
   const config = JSON.parse(readFileSync(configPath, 'utf8'));
   assert.deepEqual(config, {
     mcpServers: {
-      helpscout: { command: '/usr/local/bin/helpscout-mcp' },
+      helpscout: {
+        command: '/usr/local/bin/helpscout-mcp',
+        envFile: path.join(home, '.config', 'helpscout', 'env'),
+      },
     },
   });
 });
@@ -74,7 +77,10 @@ test('registerCursorMcp merges into existing config without clobbering other ser
   assert.deepEqual(config, {
     mcpServers: {
       other: { command: '/usr/local/bin/other-mcp' },
-      helpscout: { command: '/usr/local/bin/helpscout-mcp' },
+      helpscout: {
+        command: '/usr/local/bin/helpscout-mcp',
+        envFile: path.join(home, '.config', 'helpscout', 'env'),
+      },
     },
   });
 });
@@ -103,14 +109,19 @@ test('registerCursorMcp backs up malformed JSON and throws', () => {
 });
 
 test('mergeHelpscoutServer preserves unrelated top-level keys', () => {
+  const home = '/tmp/test-home';
   const merged = mergeHelpscoutServer(
     { mcpServers: { other: { command: 'x' } }, extra: true },
     '/usr/local/bin/helpscout-mcp',
+    home,
   );
   assert.deepEqual(merged, {
     mcpServers: {
       other: { command: 'x' },
-      helpscout: { command: '/usr/local/bin/helpscout-mcp' },
+      helpscout: {
+        command: '/usr/local/bin/helpscout-mcp',
+        envFile: path.join('/tmp/test-home', '.config', 'helpscout', 'env'),
+      },
     },
     extra: true,
   });

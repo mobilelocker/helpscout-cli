@@ -42,6 +42,29 @@ test('docs.getAll fetches all pages', async () => {
   assert.equal(results.length, 3);
 });
 
+test('docs.getAll unwraps nested resource envelopes', async () => {
+  const page1 = {
+    articles: { items: [{ id: 'a' }, { id: 'b' }], pages: 2, page: 1 },
+  };
+  const page2 = {
+    articles: { items: [{ id: 'c' }], pages: 2, page: 2 },
+  };
+  globalThis.fetch = makeFetchStub([{ body: page1 }, { body: page2 }]);
+  process.env.HELPSCOUT_API_KEY = 'test-api-key';
+
+  const { docs } = await import('../src/docs-client.js');
+  const results = await docs.getAll('/search/articles', { query: 'fax' });
+  assert.equal(results.length, 3);
+});
+
+test('extractPagedItems finds items in nested envelopes', async () => {
+  const { extractPagedItems } = await import('../src/docs-client.js');
+  assert.deepEqual(extractPagedItems({ articles: { items: [{ id: 1 }], pages: 3 } }), {
+    items: [{ id: 1 }],
+    pages: 3,
+  });
+});
+
 test('docs.get handles 429 and waits for reset', async () => {
   const past = Math.floor((Date.now() - 1000) / 1000); // 1 second ago = no wait
   const rateLimitResponse = {
