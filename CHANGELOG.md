@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.2.0] — 2026-07-09
+
+### Added
+
+- `scripts/register-mcp.js` — registers the MCP server with Claude Code (when `claude` is on PATH) and Cursor (when detected), merging into `~/.cursor/mcp.json` without clobbering other servers
+- Unit tests for MCP registration merge logic, idempotency, and malformed-config handling
+
+### Changed
+
+- `install.sh` now uses `register-mcp.js` instead of calling `claude mcp add` directly; install succeeds when only one editor is present (or neither)
+
 ## [1.1.0] — 2026-07-08
 
 ### Added

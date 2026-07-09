@@ -9,7 +9,9 @@ See README.md for installation.
 
 ## MCP Setup
 
-Add to your project's `.mcp.json`:
+Running `./install.sh` registers the MCP server with Claude Code (user scope) and Cursor (`~/.cursor/mcp.json`) when those editors are detected.
+
+To add it to a specific project instead, add to your project's `.mcp.json` (Claude Code) or `.cursor/mcp.json` (Cursor):
 
 ```json
 {

@@ -2,7 +2,7 @@
 
 A command-line tool for [Help Scout](https://www.helpscout.com), covering both the Mailbox API v2 (conversations, customers, users) and the Docs API v1 (articles, collections).
 
-Designed for scripting, automation, and use by AI agents. Ships with an MCP server (`helpscout-mcp`) for direct integration with Claude Code and Claude Desktop. Outputs JSON by default when not in a terminal, pretty tables when it is.
+Designed for scripting, automation, and use by AI agents. Ships with an MCP server (`helpscout-mcp`) for direct integration with Claude Code, Claude Desktop, and Cursor. Outputs JSON by default when not in a terminal, pretty tables when it is.
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ cd helpscout-cli
 ./install.sh
 ```
 
-`install.sh` runs `npm install`, builds both binaries (`helpscout` and `helpscout-mcp`), copies them to `/usr/local/bin`, and registers the MCP server with Claude Code — all in one step.
+`install.sh` runs `npm install`, builds both binaries (`helpscout` and `helpscout-mcp`), copies them to `/usr/local/bin`, and registers the MCP server with Claude Code and Cursor (when detected) — all in one step.
 
 ### Development (run from source)
 
@@ -57,9 +57,9 @@ The Docs API uses your `HELPSCOUT_API_KEY` directly — no login step needed.
 
 ## MCP Server
 
-`helpscout-mcp` is an [MCP](https://modelcontextprotocol.io) server that exposes all Help Scout operations as tools for use with Claude Code and Claude Desktop.
+`helpscout-mcp` is an [MCP](https://modelcontextprotocol.io) server that exposes all Help Scout operations as tools for use with Claude Code, Claude Desktop, and Cursor.
 
-After running `install.sh`, it is registered automatically. To add it to a specific project instead:
+After running `install.sh`, it is registered automatically with Claude Code (user scope) and Cursor (`~/.cursor/mcp.json`) when those editors are detected. To add it to a specific project instead:
 
 ```json
 {
