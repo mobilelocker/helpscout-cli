@@ -5,6 +5,13 @@ import { openAsBlob } from 'node:fs';
 import { basename } from 'node:path';
 import { Command } from 'commander';
 import { docs } from '../../docs-client.js';
+import { articleUpdateOptsFromCli } from '../../docs-cli-helpers.js';
+import {
+  buildArticleCreateBody,
+  buildArticleUpdateBody,
+  normalizeCliArray,
+  reloadParams,
+} from '../../docs-request-builders.js';
 import { normalizeWriteResponse } from '../../http.js';
 import { output, outputTable } from '../../output.js';
 
@@ -16,6 +23,15 @@ const COLUMNS = [
   { key: 'updatedAt', header: 'Updated' },
 ];
 
+function listQueryParams(opts) {
+  const params = {};
+  if (opts.status) params.status = opts.status;
+  if (opts.sort) params.sort = opts.sort;
+  if (opts.order) params.order = opts.order;
+  if (opts.pageSize) params.pageSize = opts.pageSize;
+  return params;
+}
+
 export function makeArticleCommand() {
   const cmd = new Command('article');
   cmd.description('Manage Docs articles');
@@ -25,7 +41,13 @@ export function makeArticleCommand() {
     .description('List articles in a collection or category')
     .option('--collection <id>', 'Collection ID')
     .option('--category <id>', 'Category ID')
-    .option('--status <status>', 'Filter by status (published, notpublished)', 'published')
+    .option('--status <status>', 'Filter by status (all, published, notpublished)', 'all')
+    .option(
+      '--sort <field>',
+      'Sort field (order, number, status, name, popularity, createdAt, updatedAt)',
+    )
+    .option('--order <dir>', 'Sort direction (asc, desc)')
+    .option('--page-size <n>', 'Results per page (max 100)', parseFloat)
     .option('--page <n>', 'Page number', '1')
     .option('--all', 'Fetch all pages')
     .action(async (opts, cmd) => {
@@ -34,7 +56,7 @@ export function makeArticleCommand() {
         throw new Error('Provide --collection or --category');
       }
 
-      const params = { status: opts.status };
+      const params = listQueryParams(opts);
       const path = opts.category
         ? `/categories/${opts.category}/articles`
         : `/collections/${opts.collection}/articles`;
@@ -64,12 +86,18 @@ export function makeArticleCommand() {
     .description('Search articles')
     .requiredOption('--query <q>', 'Search query')
     .option('--collection <id>', 'Limit to collection')
-    .option('--status <status>', 'Status filter', 'published')
+    .option('--site <id>', 'Limit to site')
+    .option('--status <status>', 'Status filter (published, notpublished)', 'published')
+    .option('--visibility <v>', 'Visibility filter (all, public, private)')
+    .option('--page-size <n>', 'Results per page (max 100)', parseFloat)
     .option('--all', 'Fetch all pages')
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
       const params = { query: opts.query, status: opts.status };
       if (opts.collection) params.collectionId = opts.collection;
+      if (opts.site) params.siteId = opts.site;
+      if (opts.visibility) params.visibility = opts.visibility;
+      if (opts.pageSize) params.pageSize = opts.pageSize;
 
       if (opts.all) {
         const items = await docs.getAll('/search/articles', params);
@@ -85,10 +113,12 @@ export function makeArticleCommand() {
     .command('list-related <id>')
     .description('List articles related to an article')
     .option('--status <status>', 'Status filter', 'all')
+    .option('--sort <field>', 'Sort field')
+    .option('--order <dir>', 'Sort direction (asc, desc)')
     .option('--all', 'Fetch all pages')
     .action(async (id, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
-      const params = { status: opts.status };
+      const params = listQueryParams(opts);
       const path = `/articles/${id}/related`;
 
       if (opts.all) {
@@ -138,20 +168,27 @@ export function makeArticleCommand() {
     .description('Create an article')
     .requiredOption('--collection <id>', 'Collection ID')
     .requiredOption('--name <title>', 'Article title')
-    .option('--text <html>', 'Article body HTML')
+    .requiredOption('--text <html>', 'Article body HTML')
     .option('--status <status>', 'Status (published, notpublished)', 'notpublished')
+    .option('--slug <slug>', 'URL slug')
+    .option('--category <id...>', 'Category IDs (repeatable)')
+    .option('--related <id...>', 'Related article IDs (repeatable)')
+    .option('--keyword <word...>', 'Keywords (repeatable)')
     .option('--reload', 'Return the created article in the response')
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
-      const body = {
+      const body = buildArticleCreateBody({
         collectionId: opts.collection,
         name: opts.name,
+        text: opts.text,
         status: opts.status,
-      };
-      if (opts.text) body.text = opts.text;
+        slug: opts.slug,
+        categories: normalizeCliArray(opts.category),
+        related: normalizeCliArray(opts.related),
+        keywords: normalizeCliArray(opts.keyword),
+      });
 
-      const params = opts.reload ? { reload: 'true' } : undefined;
-      const data = await docs.post('/articles', body, params);
+      const data = await docs.post('/articles', body, reloadParams(opts.reload));
       output(normalizeWriteResponse(data), globalOpts);
     });
 
@@ -162,6 +199,7 @@ export function makeArticleCommand() {
     .requiredOption('--file <path>', 'File to upload')
     .option('--name <title>', 'Article title (defaults to file name)')
     .option('--category <id>', 'Category ID')
+    .option('--slug <slug>', 'URL slug')
     .option('--type <type>', 'html, text, or markdown')
     .option('--reload', 'Return the created article in the response')
     .action(async (opts, cmd) => {
@@ -174,12 +212,12 @@ export function makeArticleCommand() {
       form.append('collectionId', opts.collection);
       if (opts.name) form.append('name', opts.name);
       if (opts.category) form.append('categoryId', opts.category);
+      if (opts.slug) form.append('slug', opts.slug);
       if (opts.type) form.append('type', opts.type);
       const blob = await openAsBlob(opts.file);
       form.append('file', blob, basename(opts.file));
 
-      const params = opts.reload ? { reload: 'true' } : undefined;
-      const data = await docs.upload('/articles/upload', form, params);
+      const data = await docs.upload('/articles/upload', form, reloadParams(opts.reload));
       output(normalizeWriteResponse(data), globalOpts);
     });
 
@@ -189,14 +227,25 @@ export function makeArticleCommand() {
     .option('--name <title>', 'New title')
     .option('--text <html>', 'New body HTML')
     .option('--status <status>', 'New status (published, notpublished)')
+    .option('--slug <slug>', 'URL slug')
+    .option('--category <id...>', 'Category IDs (repeatable)')
+    .option('--related <id...>', 'Related article IDs (repeatable)')
+    .option('--keyword <word...>', 'Keywords (repeatable)')
+    .option('--clear-categories', 'Clear all categories')
+    .option('--clear-related', 'Clear related articles')
+    .option('--clear-keywords', 'Clear keywords')
+    .option('--reload', 'Return the updated article in the response')
     .action(async (id, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
-      const body = {};
-      if (opts.name) body.name = opts.name;
-      if (opts.text) body.text = opts.text;
-      if (opts.status) body.status = opts.status;
+      const parsed = articleUpdateOptsFromCli(opts);
+      const body = buildArticleUpdateBody({
+        ...parsed,
+        categories: normalizeCliArray(parsed.categories),
+        related: normalizeCliArray(parsed.related),
+        keywords: normalizeCliArray(parsed.keywords),
+      });
 
-      const data = await docs.put(`/articles/${id}`, body);
+      const data = await docs.put(`/articles/${id}`, body, reloadParams(opts.reload));
       output(normalizeWriteResponse(data, { ok: true, id }), globalOpts);
     });
 

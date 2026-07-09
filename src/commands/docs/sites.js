@@ -3,6 +3,13 @@
  */
 import { Command } from 'commander';
 import { docs } from '../../docs-client.js';
+import { addSiteBodyOptions, siteBodyFromOpts } from '../../docs-cli-helpers.js';
+import {
+  buildSiteCreateBody,
+  buildSiteUpdateBody,
+  buildSiteRestrictionsBody,
+  reloadParams,
+} from '../../docs-request-builders.js';
 import { normalizeWriteResponse } from '../../http.js';
 import { output, outputTable } from '../../output.js';
 
@@ -44,34 +51,33 @@ export function makeSiteCommand() {
       output(data?.site ?? data, globalOpts);
     });
 
-  cmd
-    .command('create')
-    .description('Create a site')
-    .requiredOption('--title <title>', 'Site title')
-    .requiredOption('--subdomain <name>', 'Subdomain')
-    .option('--reload', 'Return the created site in the response')
-    .action(async (opts, cmd) => {
-      const globalOpts = cmd.optsWithGlobals();
-      const body = { title: opts.title, subDomain: opts.subdomain };
-      const params = opts.reload ? { reload: 'true' } : undefined;
-      const data = await docs.post('/sites', body, params);
-      output(normalizeWriteResponse(data), globalOpts);
-    });
+  addSiteBodyOptions(
+    cmd
+      .command('create')
+      .description('Create a site')
+      .requiredOption('--title <title>', 'Site title')
+      .requiredOption('--subdomain <name>', 'Subdomain')
+      .option('--reload', 'Return the created site in the response'),
+  ).action(async (opts, cmd) => {
+    const globalOpts = cmd.optsWithGlobals();
+    const body = buildSiteCreateBody(siteBodyFromOpts(opts));
+    const data = await docs.post('/sites', body, reloadParams(opts.reload));
+    output(normalizeWriteResponse(data), globalOpts);
+  });
 
-  cmd
-    .command('update <id>')
-    .description('Update a site')
-    .option('--title <title>', 'Site title')
-    .option('--subdomain <name>', 'Subdomain')
-    .action(async (id, opts, cmd) => {
-      const globalOpts = cmd.optsWithGlobals();
-      const body = {};
-      if (opts.title) body.title = opts.title;
-      if (opts.subdomain) body.subDomain = opts.subdomain;
-
-      const data = await docs.put(`/sites/${id}`, body);
-      output(normalizeWriteResponse(data, { ok: true, id }), globalOpts);
-    });
+  addSiteBodyOptions(
+    cmd
+      .command('update <id>')
+      .description('Update a site')
+      .option('--title <title>', 'Site title')
+      .option('--subdomain <name>', 'Subdomain')
+      .option('--reload', 'Return the updated site in the response'),
+  ).action(async (id, opts, cmd) => {
+    const globalOpts = cmd.optsWithGlobals();
+    const body = buildSiteUpdateBody(siteBodyFromOpts(opts));
+    const data = await docs.put(`/sites/${id}`, body, reloadParams(opts.reload));
+    output(normalizeWriteResponse(data, { ok: true, id }), globalOpts);
+  });
 
   cmd
     .command('delete <id>')
@@ -99,16 +105,15 @@ export function makeSiteCommand() {
     .description('Update site restriction settings')
     .option('--enabled', 'Enable restrictions')
     .option('--disabled', 'Disable restrictions')
+    .option('--authentication <mode>', 'Authentication mode (CALLBACK, etc.)')
     .option('--sign-in-url <url>', 'Custom callback sign-in URL')
     .action(async (siteId, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
-      const body = {};
-      if (opts.enabled) body.enabled = true;
-      if (opts.disabled) body.enabled = false;
-      if (opts.signInUrl) {
-        body.authentication = 'CALLBACK';
-        body.callbackConfiguration = { signInUrl: opts.signInUrl };
-      }
+      const body = buildSiteRestrictionsBody({
+        enabled: opts.enabled ? true : opts.disabled ? false : undefined,
+        authentication: opts.authentication,
+        signInUrl: opts.signInUrl,
+      });
 
       const data = await docs.put(`/sites/${siteId}/restricted`, body);
       output(data ?? { ok: true, id: siteId }, globalOpts);

@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.4.0] — 2026-07-09
+
+### Added
+
+- Full Docs API **field parity** — CLI flags and MCP tool schemas now expose every documented request body field, query param, and multipart form field across articles, collections, categories, redirects, and sites
+- Shared request builders (`src/docs-request-builders.js`) and Zod schemas (`src/docs-api-schemas.js`) used by both CLI and MCP to prevent drift
+- Machine-readable field metadata on `docs/docs-api-endpoints.json` (`bodyFields`, `queryParams`, `requiredBody`, `formFields`)
+- Field coverage test (`test/docs-api-field-coverage.test.js`) and endpoint→tool mapping (`src/docs-api-field-map.js`)
+- Articles: `slug`, `categories[]`, `related[]`, `keywords[]` on create/update; `--clear-categories`, `--clear-related`, `--clear-keywords` on update; list/search sort/order/pageSize; list default `--status all`
+- Sites: all accepted create/update fields (logo, favicon, contact form, stylesheet, header code, etc.)
+- Collections/categories: `sort` and `order` query params; collection update `siteId` move and `reload`
+- Redirect update: fetch-then-merge so all three required body fields are sent; `siteId` and `reload`
+- Site restrictions: explicit `authentication` param (MCP and CLI)
+
+### Changed
+
+- `create_article` / `docs article create` now require `text` (matches API)
+- Scraper extracts Accepted Fields and query params from developer.helpscout.com pages
+- Catalog path corrections: article view count uses `/views`; site restrictions use `/restricted`
+
 ## [1.3.1] — 2026-07-09
 
 ### Fixed
