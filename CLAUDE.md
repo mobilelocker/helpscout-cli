@@ -17,7 +17,7 @@ This is a **GitHub** repository. Do **not** prefix commit subjects with Jira/MLH
 
 ## MCP Setup
 
-Running `./install.sh` registers the MCP server with Claude Code (user scope) and Cursor (`~/.cursor/mcp.json`) when those editors are detected.
+Running `./install.sh` registers the MCP server with Claude Code (user scope) and Cursor (`~/.cursor/mcp.json`) when those editors are detected. It also stops any already-running `helpscout-mcp` processes after installing the binary so reinstalls load the new build (reconnect Help Scout MCP in the editor if a session was open).
 
 To add it to a specific project instead, add to your project's `.mcp.json` (Claude Code) or `.cursor/mcp.json` (Cursor):
 

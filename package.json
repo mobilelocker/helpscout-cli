@@ -1,6 +1,6 @@
 {
   "name": "helpscout-cli",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "Help Scout CLI for Mailbox API v2 and Docs API v1",
   "author": "Mobile Locker <support@mobilelocker.com>",
   "license": "MIT",
@@ -21,7 +21,7 @@
     "format:check": "prettier --check .",
     "prepare": "simple-git-hooks",
     "build": "mkdir -p dist && echo '{\"type\":\"commonjs\"}' > dist/package.json && esbuild bin/helpscout.js --bundle --platform=node --format=cjs --outfile=dist/helpscout && chmod +x dist/helpscout && esbuild bin/helpscout-mcp.js --bundle --platform=node --format=cjs --outfile=dist/helpscout-mcp && chmod +x dist/helpscout-mcp",
-    "install:bin": "npm run build && cp dist/helpscout /usr/local/bin/helpscout && cp dist/helpscout-mcp /usr/local/bin/helpscout-mcp"
+    "install:bin": "npm run build && cp dist/helpscout /usr/local/bin/helpscout && cp dist/helpscout-mcp /usr/local/bin/helpscout-mcp && bash scripts/stop-helpscout-mcp.sh /usr/local/bin/helpscout-mcp"
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged"

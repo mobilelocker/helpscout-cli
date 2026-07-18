@@ -19,7 +19,7 @@ cd helpscout-cli
 ./install.sh
 ```
 
-`install.sh` runs `npm install`, builds both binaries (`helpscout` and `helpscout-mcp`), copies them to `/usr/local/bin`, and registers the MCP server with Claude Code and Cursor (when detected) — all in one step.
+`install.sh` runs `npm install`, builds both binaries (`helpscout` and `helpscout-mcp`), copies them to `/usr/local/bin`, stops any already-running `helpscout-mcp` processes (so you do not keep an old in-memory server after upgrade), and registers the MCP server with Claude Code and Cursor (when detected) — all in one step. If an editor had Help Scout MCP connected, reconnect it (or open a new session) so it starts the new binary.
 
 ### Development (run from source)
 

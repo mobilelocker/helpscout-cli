@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.1] — 2026-07-18
+
+### Fixed
+
+- `install.sh` and `npm run install:bin` stop running `helpscout-mcp` processes after installing a new binary so upgrades are not shadowed by an old in-memory server ([#12](https://github.com/mobilelocker/helpscout-cli/issues/12))
+
 ## [1.5.0] — 2026-07-18
 
 ### Added
