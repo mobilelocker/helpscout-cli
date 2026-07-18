@@ -4,10 +4,18 @@
 
 ### Added
 
-- Free-form text can load from disk via optional `filePath` (MCP) or `--file` (CLI) instead of large inline strings
-  - Docs: `create_article`, `update_article`, `save_article_draft` / `docs article create|update|save-draft`
-  - Inbox: `reply_to_conversation`, `add_note`, `create_conversation` (`body`) / matching CLI commands
-- Shared `resolveTextOrFile` helper (`src/text-or-file.js`) used by CLI and MCP (mutual exclusivity + clear file errors)
+- **Load free-form HTML/text from a file** instead of passing large bodies inline (MCP tool args or CLI flags)
+  - MCP: optional `filePath` on `create_article`, `update_article`, `save_article_draft`, `reply_to_conversation`, `add_note`, and `create_conversation` (uses `body` or `filePath`)
+  - CLI: `--file <path>` on `docs article create|update|save-draft`, `inbox thread reply|note`, and `inbox conversation create` (uses `--body` or `--file`)
+  - Exactly one of text/body or file for required bodies; at most one when the body is optional
+  - Still uses the existing JSON create/update/reply APIs (not multipart `upload_article`)
+- Shared `resolveTextOrFile` helper (`src/text-or-file.js`) for CLI and MCP, with clear errors for mutual exclusivity, missing files, and unreadable paths
+- Unit, CLI, and MCP tests for file-path body loading (offline; no live Help Scout calls)
+
+### Changed
+
+- Live integration tests in `test/integration/` are **opt-in** via `HELPSCOUT_RUN_INTEGRATION=1` (or `npm run test:integration`). Plain `npm test` stays offline even when credentials are present in the environment.
+- Project docs: GitHub commit conventions (plain subjects, `#N` / `Closes #N`; no `MLH-` subject prefix for new work)
 
 ## [1.4.1] — 2026-07-09
 
