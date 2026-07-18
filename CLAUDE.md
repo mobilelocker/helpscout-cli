@@ -7,6 +7,14 @@ Two binaries are available:
 
 See README.md for installation.
 
+## Git commits (this repo)
+
+This is a **GitHub** repository. Do **not** prefix commit subjects with Jira/MLH keys (e.g. no `MLH-10 Add feature`), even though older history used that style.
+
+- Subject: plain imperative (`Add file-path body support…`)
+- Link issues with `#123`; close with `Closes #123` in the commit body or PR description
+- Full rules: follow global Claude GitHub commit conventions
+
 ## MCP Setup
 
 Running `./install.sh` registers the MCP server with Claude Code (user scope) and Cursor (`~/.cursor/mcp.json`) when those editors are detected.

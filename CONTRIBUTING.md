@@ -34,3 +34,4 @@ Pre-commit hooks run ESLint and Prettier on staged files automatically.
 - Keep PRs focused — one feature or fix per PR
 - Add or update tests for any changed behavior
 - Make sure `npm test` and `npm run lint` pass before submitting
+- Commits use standard GitHub conventions: plain imperative subjects (no `MLH-` / Jira prefix); link or close issues with `#123` / `Closes #123` (see `CLAUDE.md`)
