@@ -4,6 +4,7 @@
 import { Command } from 'commander';
 import { mailbox } from '../../mailbox-client.js';
 import { output, outputTable } from '../../output.js';
+import { resolveTextOrFile } from '../../text-or-file.js';
 
 const COLUMNS = [
   { key: 'id', header: 'ID' },
@@ -69,12 +70,19 @@ export function makeConversationCommand() {
     .requiredOption('--mailbox-id <id>', 'Mailbox ID')
     .requiredOption('--customer-email <email>', 'Customer email')
     .option('--body <text>', 'Initial message body')
+    .option('--file <path>', 'Read initial message body from file (alternative to --body)')
     .option('--status <status>', 'Status (active, closed, pending)', 'active')
     .option('--type <type>', 'Conversation type (email, chat, phone)', 'email')
     .option('--tag <tag...>', 'Tags to apply')
     .option('--assigned-to <userId>', 'User ID to assign to')
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
+      const messageBody = await resolveTextOrFile({
+        text: opts.body,
+        filePath: opts.file,
+        required: false,
+        paramNames: { text: '--body', file: '--file' },
+      });
       const body = {
         subject: opts.subject,
         mailboxId: parseInt(opts.mailboxId),
@@ -82,8 +90,8 @@ export function makeConversationCommand() {
         status: opts.status,
         type: opts.type,
       };
-      if (opts.body) {
-        body.threads = [{ type: 'customer', text: opts.body }];
+      if (messageBody) {
+        body.threads = [{ type: 'customer', text: messageBody }];
       }
       if (opts.tag) body.tags = opts.tag;
       if (opts.assignedTo) body.assignTo = parseInt(opts.assignedTo);

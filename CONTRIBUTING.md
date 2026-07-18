@@ -17,13 +17,14 @@ node bin/helpscout.js <command>
 ## Testing
 
 ```sh
-npm test          # run all unit tests
-npm run lint      # check for lint errors
-npm run lint:fix  # auto-fix lint errors
-npm run format    # format with Prettier
+npm test                  # unit tests only (no live Help Scout calls)
+npm run test:integration  # live API tests (opt-in; needs credentials)
+npm run lint              # check for lint errors
+npm run lint:fix          # auto-fix lint errors
+npm run format            # format with Prettier
 ```
 
-Unit tests use Node's built-in `node:test` and run without credentials. Integration tests (in `test/integration/`) require `HELPSCOUT_APP_ID`, `HELPSCOUT_APP_SECRET`, and `HELPSCOUT_API_KEY` to be set and are skipped automatically when they are not.
+Unit tests use Node's built-in `node:test` and never call Help Scout. Live integration tests in `test/integration/` are **opt-in**: they run only when `HELPSCOUT_RUN_INTEGRATION=1` is set (as with `npm run test:integration`). They also need the usual credentials (`HELPSCOUT_API_KEY` for Docs; `HELPSCOUT_APP_ID`, `HELPSCOUT_APP_SECRET`, and a cached OAuth token for Mailbox). Without the flag, those tests are skipped even if credentials are present in your environment.
 
 Pre-commit hooks run ESLint and Prettier on staged files automatically.
 

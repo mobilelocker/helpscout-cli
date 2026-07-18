@@ -4,6 +4,7 @@
 import { Command } from 'commander';
 import { mailbox } from '../../mailbox-client.js';
 import { output, outputTable } from '../../output.js';
+import { resolveTextOrFile } from '../../text-or-file.js';
 
 const COLUMNS = [
   { key: 'id', header: 'ID' },
@@ -45,13 +46,20 @@ export function makeThreadCommand() {
   cmd
     .command('reply <conversationId>')
     .description('Create a reply thread')
-    .requiredOption('--text <text>', 'Reply text (HTML allowed)')
+    .option('--text <text>', 'Reply text (HTML allowed; required unless --file)')
+    .option('--file <path>', 'Read reply text from file (alternative to --text)')
     .option('--user <userId>', 'Author user ID')
     .option('--cc <emails>', 'Comma-separated CC addresses')
     .option('--bcc <emails>', 'Comma-separated BCC addresses')
     .action(async (conversationId, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
-      const body = { type: 'reply', text: opts.text };
+      const text = await resolveTextOrFile({
+        text: opts.text,
+        filePath: opts.file,
+        required: true,
+        paramNames: { text: '--text', file: '--file' },
+      });
+      const body = { type: 'reply', text };
       if (opts.user) body.user = parseInt(opts.user);
       if (opts.cc) body.cc = opts.cc.split(',').map((s) => s.trim());
       if (opts.bcc) body.bcc = opts.bcc.split(',').map((s) => s.trim());
@@ -63,11 +71,18 @@ export function makeThreadCommand() {
   cmd
     .command('note <conversationId>')
     .description('Create an internal note')
-    .requiredOption('--text <text>', 'Note text (HTML allowed)')
+    .option('--text <text>', 'Note text (HTML allowed; required unless --file)')
+    .option('--file <path>', 'Read note text from file (alternative to --text)')
     .option('--user <userId>', 'Author user ID')
     .action(async (conversationId, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
-      const body = { type: 'note', text: opts.text };
+      const text = await resolveTextOrFile({
+        text: opts.text,
+        filePath: opts.file,
+        required: true,
+        paramNames: { text: '--text', file: '--file' },
+      });
+      const body = { type: 'note', text };
       if (opts.user) body.user = parseInt(opts.user);
 
       await mailbox.post(`/conversations/${conversationId}/threads/note`, body);

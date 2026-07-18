@@ -4,6 +4,7 @@
 import { openAsBlob } from 'node:fs';
 import { basename } from 'node:path';
 import { z } from 'zod';
+import { resolveTextOrFile } from './text-or-file.js';
 import { normalizeWriteResponse } from './http.js';
 import {
   articleListQueryFields,
@@ -246,11 +247,16 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
   server.registerTool(
     'create_article',
     {
-      description: 'Create a new Help Scout Docs article (draft by default).',
+      description:
+        'Create a new Help Scout Docs article (draft by default). Provide article body via text or filePath (exactly one).',
       inputSchema: {
         collectionId: z.string(),
         name: z.string(),
-        text: z.string(),
+        text: z.string().optional().describe('Article body HTML (required unless filePath is set)'),
+        filePath: z
+          .string()
+          .optional()
+          .describe('Absolute path to HTML file for article body (alternative to text)'),
         status: z.enum(['published', 'notpublished']).optional(),
         slug: z.string().optional(),
         categories: z.array(z.string()).optional().describe('Category IDs'),
@@ -259,12 +265,24 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
         reload: z.boolean().optional().describe('Return full article in response'),
       },
     },
-    async ({ collectionId, name, text, status, slug, categories, related, keywords, reload }) => {
+    async ({
+      collectionId,
+      name,
+      text,
+      filePath,
+      status,
+      slug,
+      categories,
+      related,
+      keywords,
+      reload,
+    }) => {
       try {
+        const bodyText = await resolveTextOrFile({ text, filePath, required: true });
         const body = buildArticleCreateBody({
           collectionId,
           name,
-          text,
+          text: bodyText,
           status,
           slug,
           categories,
@@ -318,11 +336,15 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
     'update_article',
     {
       description:
-        'Update an existing Help Scout Docs article. For categories: omit to leave unchanged, pass null or clearCategories to move to Uncategorized, or pass category id array to replace. Do not include the Uncategorized category id in the array.',
+        'Update an existing Help Scout Docs article. Provide body via text or filePath (at most one). For categories: omit to leave unchanged, pass null or clearCategories to move to Uncategorized, or pass category id array to replace. Do not include the Uncategorized category id in the array.',
       inputSchema: {
         id: z.string(),
         name: z.string().optional(),
-        text: z.string().optional(),
+        text: z.string().optional().describe('New body HTML'),
+        filePath: z
+          .string()
+          .optional()
+          .describe('Absolute path to HTML file for new body (alternative to text)'),
         status: z.enum(['published', 'notpublished']).optional(),
         slug: z.string().optional(),
         categories: articleUpdateCategoriesField(),
@@ -341,6 +363,7 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
       id,
       name,
       text,
+      filePath,
       status,
       slug,
       categories,
@@ -352,9 +375,10 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
       reload,
     }) => {
       try {
+        const bodyText = await resolveTextOrFile({ text, filePath, required: false });
         const body = buildArticleUpdateBody({
           name,
-          text,
+          text: bodyText,
           status,
           slug,
           categories,
@@ -394,15 +418,21 @@ export function registerDocsTools(server, { docs, ok, okMarkdown, fail }) {
   server.registerTool(
     'save_article_draft',
     {
-      description: 'Create or update a draft version of a Docs article.',
+      description:
+        'Create or update a draft version of a Docs article. Provide body via text or filePath (exactly one).',
       inputSchema: {
         id: z.string(),
-        text: z.string(),
+        text: z.string().optional().describe('Draft body HTML (required unless filePath is set)'),
+        filePath: z
+          .string()
+          .optional()
+          .describe('Absolute path to HTML file for draft body (alternative to text)'),
       },
     },
-    async ({ id, text }) => {
+    async ({ id, text, filePath }) => {
       try {
-        await docs.put(`/articles/${id}/drafts`, { text });
+        const bodyText = await resolveTextOrFile({ text, filePath, required: true });
+        await docs.put(`/articles/${id}/drafts`, { text: bodyText });
         return ok({ ok: true, id });
       } catch (e) {
         return fail(e);

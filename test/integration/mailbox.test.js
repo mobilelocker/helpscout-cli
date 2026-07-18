@@ -1,8 +1,14 @@
 /**
- * Integration tests for the Mailbox API client.
+ * Live Mailbox API integration tests.
+ *
+ * Opt-in only — never runs during plain `npm test`, even if OAuth credentials are set.
+ *
+ *   HELPSCOUT_RUN_INTEGRATION=1 npm test
+ *   # or just this file:
+ *   HELPSCOUT_RUN_INTEGRATION=1 node --test test/integration/mailbox.test.js
+ *
  * Requires HELPSCOUT_APP_ID, HELPSCOUT_APP_SECRET, and a valid cached token
  * (~/.cache/helpscout/token.json). Run `helpscout auth login` first.
- * Tests are skipped automatically when credentials are absent so they don't break CI.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,8 +16,13 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
+const runIntegration = process.env.HELPSCOUT_RUN_INTEGRATION === '1';
 const tokenCached = existsSync(path.join(os.homedir(), '.cache', 'helpscout', 'token.json'));
-const skip = !process.env.HELPSCOUT_APP_ID || !process.env.HELPSCOUT_APP_SECRET || !tokenCached;
+const skip =
+  !runIntegration ||
+  !process.env.HELPSCOUT_APP_ID ||
+  !process.env.HELPSCOUT_APP_SECRET ||
+  !tokenCached;
 
 test('list_mailboxes returns at least one mailbox', { skip }, async () => {
   const { mailbox } = await import('../../src/mailbox-client.js');

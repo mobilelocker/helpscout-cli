@@ -24,6 +24,9 @@ dist/
 # Playwright MCP scraping artifacts
 .playwright-mcp/
 
+# Local agent codebase-memory graph (generated on the machine, not for the repo)
+.codebase-memory/
+
 # Logs
 *.log
 npm-debug.log*

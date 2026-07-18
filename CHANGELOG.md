@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.0] — 2026-07-18
+
+### Added
+
+- Free-form text can load from disk via optional `filePath` (MCP) or `--file` (CLI) instead of large inline strings
+  - Docs: `create_article`, `update_article`, `save_article_draft` / `docs article create|update|save-draft`
+  - Inbox: `reply_to_conversation`, `add_note`, `create_conversation` (`body`) / matching CLI commands
+- Shared `resolveTextOrFile` helper (`src/text-or-file.js`) used by CLI and MCP (mutual exclusivity + clear file errors)
+
 ## [1.4.1] — 2026-07-09
 
 ### Fixed

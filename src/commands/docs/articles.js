@@ -4,6 +4,7 @@
 import { openAsBlob } from 'node:fs';
 import { basename } from 'node:path';
 import { Command } from 'commander';
+import { resolveTextOrFile } from '../../text-or-file.js';
 import { docs } from '../../docs-client.js';
 import { articleUpdateOptsFromCli } from '../../docs-cli-helpers.js';
 import {
@@ -168,7 +169,8 @@ export function makeArticleCommand() {
     .description('Create an article')
     .requiredOption('--collection <id>', 'Collection ID')
     .requiredOption('--name <title>', 'Article title')
-    .requiredOption('--text <html>', 'Article body HTML')
+    .option('--text <html>', 'Article body HTML (required unless --file)')
+    .option('--file <path>', 'Read article body HTML from file (alternative to --text)')
     .option('--status <status>', 'Status (published, notpublished)', 'notpublished')
     .option('--slug <slug>', 'URL slug')
     .option('--category <id...>', 'Category IDs (repeatable)')
@@ -177,10 +179,16 @@ export function makeArticleCommand() {
     .option('--reload', 'Return the created article in the response')
     .action(async (opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
+      const text = await resolveTextOrFile({
+        text: opts.text,
+        filePath: opts.file,
+        required: true,
+        paramNames: { text: '--text', file: '--file' },
+      });
       const body = buildArticleCreateBody({
         collectionId: opts.collection,
         name: opts.name,
-        text: opts.text,
+        text,
         status: opts.status,
         slug: opts.slug,
         categories: normalizeCliArray(opts.category),
@@ -226,6 +234,7 @@ export function makeArticleCommand() {
     .description('Update an article')
     .option('--name <title>', 'New title')
     .option('--text <html>', 'New body HTML')
+    .option('--file <path>', 'Read new body HTML from file (alternative to --text)')
     .option('--status <status>', 'New status (published, notpublished)')
     .option('--slug <slug>', 'URL slug')
     .option('--category <id...>', 'Category IDs (repeatable)')
@@ -237,7 +246,13 @@ export function makeArticleCommand() {
     .option('--reload', 'Return the updated article in the response')
     .action(async (id, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
-      const parsed = articleUpdateOptsFromCli(opts);
+      const text = await resolveTextOrFile({
+        text: opts.text,
+        filePath: opts.file,
+        required: false,
+        paramNames: { text: '--text', file: '--file' },
+      });
+      const parsed = articleUpdateOptsFromCli({ ...opts, text });
       const body = buildArticleUpdateBody({
         ...parsed,
         categories: normalizeCliArray(parsed.categories),
@@ -262,10 +277,17 @@ export function makeArticleCommand() {
   cmd
     .command('save-draft <id>')
     .description('Create or update a draft version of an article')
-    .requiredOption('--text <html>', 'Draft body HTML')
+    .option('--text <html>', 'Draft body HTML (required unless --file)')
+    .option('--file <path>', 'Read draft body HTML from file (alternative to --text)')
     .action(async (id, opts, cmd) => {
       const globalOpts = cmd.optsWithGlobals();
-      await docs.put(`/articles/${id}/drafts`, { text: opts.text });
+      const text = await resolveTextOrFile({
+        text: opts.text,
+        filePath: opts.file,
+        required: true,
+        paramNames: { text: '--text', file: '--file' },
+      });
+      await docs.put(`/articles/${id}/drafts`, { text });
       output({ ok: true, id }, globalOpts);
     });
 

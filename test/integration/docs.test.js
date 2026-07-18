@@ -1,12 +1,19 @@
 /**
- * Integration tests for the Docs API client.
- * Requires HELPSCOUT_API_KEY to be set. Tests are skipped automatically
- * when credentials are absent so they don't break CI.
+ * Live Docs API integration tests.
+ *
+ * Opt-in only — never runs during plain `npm test`, even if HELPSCOUT_API_KEY is set.
+ *
+ *   HELPSCOUT_RUN_INTEGRATION=1 npm test
+ *   # or just this file:
+ *   HELPSCOUT_RUN_INTEGRATION=1 node --test test/integration/docs.test.js
+ *
+ * Requires HELPSCOUT_API_KEY. Creates and deletes a draft article.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-const skip = !process.env.HELPSCOUT_API_KEY;
+const runIntegration = process.env.HELPSCOUT_RUN_INTEGRATION === '1';
+const skip = !runIntegration || !process.env.HELPSCOUT_API_KEY;
 
 test('list_collections returns at least one collection', { skip }, async () => {
   const { docs } = await import('../../src/docs-client.js');

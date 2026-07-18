@@ -127,7 +127,8 @@ helpscout inbox conversation create [options]
   --subject <text>         (required)
   --mailbox-id <id>        (required)
   --customer-email <email> (required)
-  --body <html>
+  --body <html>            initial message (optional unless --file)
+  --file <path>            read initial message from file (alternative to --body)
   --status <s>             active (default) | closed | pending
   --type <t>               email (default) | chat | phone
   --tag <tag...>           repeatable
@@ -148,13 +149,15 @@ helpscout inbox conversation delete <id>
 helpscout inbox thread list <conversationId> [--all]
 
 helpscout inbox thread reply <conversationId> [options]
-  --text <html>    (required)
+  --text <html>    (required unless --file)
+  --file <path>    read reply from file (alternative to --text)
   --user <uid>
   --cc <emails>    comma-separated
   --bcc <emails>   comma-separated
 
 helpscout inbox thread note <conversationId> [options]
-  --text <html>    (required)
+  --text <html>    (required unless --file)
+  --file <path>    read note from file (alternative to --text)
   --user <uid>
 ```
 
@@ -249,7 +252,8 @@ helpscout docs article get-revision <revisionId>
 helpscout docs article create [options]
   --collection <id>   (required)
   --name <title>      (required)
-  --text <html>       (required)
+  --text <html>       body HTML (required unless --file)
+  --file <path>       read body HTML from file (alternative to --text)
   --status <s>        notpublished (default) | published
   --slug <slug>
   --category <id...>  category IDs (repeatable)
@@ -258,10 +262,10 @@ helpscout docs article create [options]
   --reload            return full article JSON (reload=true query param)
 
 helpscout docs article upload --collection <id> --file <path> [--name] [--category] [--slug] [--type html|text|markdown] [--reload]
-helpscout docs article update <id> [--name] [--text] [--status] [--slug] [--category <id...>] [--related <id...>] [--keyword <word...>] [--clear-categories] [--clear-related] [--clear-keywords] [--reload]
-  categories on update: omit = unchanged; --clear-categories or null = Uncategorized; --category ids = replace (never pass Uncategorized id)
+helpscout docs article update <id> [--name] [--text] [--file <path>] [--status] [--slug] [--category <id...>] [--related <id...>] [--keyword <word...>] [--clear-categories] [--clear-related] [--clear-keywords] [--reload]
+  body: --text or --file (at most one); categories on update: omit = unchanged; --clear-categories or null = Uncategorized; --category ids = replace (never pass Uncategorized id)
 helpscout docs article update-view-count <id>
-helpscout docs article save-draft <id>
+helpscout docs article save-draft <id> [--text <html> | --file <path>]
 helpscout docs article delete-draft <id>
 helpscout docs article delete <id>
 ```
@@ -344,6 +348,8 @@ helpscout inbox conversation list --mailbox <mailbox-id> --status active --all
 
 ```sh
 helpscout inbox thread reply <id> --text "Thanks for reaching out!"
+helpscout inbox thread reply <id> --file ./reply.html
+helpscout inbox thread note <id> --file ./note.html
 ```
 
 **Find a Docs collection, then list its articles:**
@@ -360,3 +366,14 @@ helpscout docs article create --collection <collection-id> --name "My Article" -
 # → { "id": "...", "location": "https://docsapi.helpscout.net/v1/articles/..." }
 helpscout docs article update <new-id> --status published
 ```
+
+**Load free-form text from a file** (avoids large inline `--text` / MCP payloads; JSON APIs only — not multipart upload):
+
+```sh
+helpscout docs article create --collection <collection-id> --name "My Article" --file ./body.html
+helpscout docs article update <id> --file ./body.html
+helpscout docs article save-draft <id> --file ./draft.html
+helpscout inbox conversation create --subject "Hi" --mailbox-id <id> --customer-email a@b.com --file ./body.html
+```
+
+MCP: pass `filePath` (absolute path) instead of `text`/`body` on `create_article`, `update_article`, `save_article_draft`, `reply_to_conversation`, `add_note`, and `create_conversation`.

@@ -12,6 +12,7 @@ import { docs } from './docs-client.js';
 import { normalizeWriteResponse } from './http.js';
 import { registerDocsTools } from './mcp-server-docs.js';
 import { USER_STATUS_COLUMNS } from './columns.js';
+import { resolveTextOrFile } from './text-or-file.js';
 import pkg from '../package.json' with { type: 'json' };
 
 // 61 tools:
@@ -174,12 +175,17 @@ server.registerTool(
 server.registerTool(
   'create_conversation',
   {
-    description: 'Create a new conversation in Help Scout.',
+    description:
+      'Create a new conversation in Help Scout. Optional initial message via body or filePath (at most one).',
     inputSchema: {
       subject: z.string().describe('Conversation subject'),
       mailboxId: z.number().describe('Mailbox ID to create the conversation in'),
       customerEmail: z.string().describe('Customer email address'),
       body: z.string().optional().describe('Initial message body (HTML allowed)'),
+      filePath: z
+        .string()
+        .optional()
+        .describe('Absolute path to file for initial message body (alternative to body)'),
       status: z
         .enum(['active', 'closed', 'pending'])
         .optional()
@@ -192,8 +198,14 @@ server.registerTool(
       assignedTo: z.number().optional().describe('User ID to assign the conversation to'),
     },
   },
-  async ({ subject, mailboxId, customerEmail, body, status, type, tags, assignedTo }) => {
+  async ({ subject, mailboxId, customerEmail, body, filePath, status, type, tags, assignedTo }) => {
     try {
+      const messageBody = await resolveTextOrFile({
+        text: body,
+        filePath,
+        required: false,
+        paramNames: { text: 'body', file: 'filePath' },
+      });
       const payload = {
         subject,
         mailboxId,
@@ -201,7 +213,7 @@ server.registerTool(
         status: status ?? 'active',
         type: type ?? 'email',
       };
-      if (body) payload.threads = [{ type: 'customer', body }];
+      if (messageBody) payload.threads = [{ type: 'customer', body: messageBody }];
       if (tags) payload.tags = tags;
       if (assignedTo) payload.assignTo = assignedTo;
       const data = await mailbox.post('/conversations', payload);
@@ -301,18 +313,27 @@ server.registerTool(
 server.registerTool(
   'reply_to_conversation',
   {
-    description: 'Send a reply to a customer in a conversation.',
+    description:
+      'Send a reply to a customer in a conversation. Provide body via text or filePath (exactly one).',
     inputSchema: {
       conversationId: z.number().describe('Conversation ID'),
-      text: z.string().describe('Reply body (HTML allowed)'),
+      text: z
+        .string()
+        .optional()
+        .describe('Reply body (HTML allowed; required unless filePath is set)'),
+      filePath: z
+        .string()
+        .optional()
+        .describe('Absolute path to file for reply body (alternative to text)'),
       userId: z.number().optional().describe('Author user ID (defaults to token owner)'),
       cc: z.string().optional().describe('Comma-separated CC email addresses'),
       bcc: z.string().optional().describe('Comma-separated BCC email addresses'),
     },
   },
-  async ({ conversationId, text, userId, cc, bcc }) => {
+  async ({ conversationId, text, filePath, userId, cc, bcc }) => {
     try {
-      const body = { type: 'reply', body: text };
+      const replyText = await resolveTextOrFile({ text, filePath, required: true });
+      const body = { type: 'reply', body: replyText };
       if (userId) body.userId = userId;
       if (cc) body.cc = cc.split(',').map((s) => s.trim());
       if (bcc) body.bcc = bcc.split(',').map((s) => s.trim());
@@ -327,16 +348,25 @@ server.registerTool(
 server.registerTool(
   'add_note',
   {
-    description: 'Add an internal note to a conversation (not visible to customers).',
+    description:
+      'Add an internal note to a conversation (not visible to customers). Provide body via text or filePath (exactly one).',
     inputSchema: {
       conversationId: z.number().describe('Conversation ID'),
-      text: z.string().describe('Note body (HTML allowed)'),
+      text: z
+        .string()
+        .optional()
+        .describe('Note body (HTML allowed; required unless filePath is set)'),
+      filePath: z
+        .string()
+        .optional()
+        .describe('Absolute path to file for note body (alternative to text)'),
       userId: z.number().optional().describe('Author user ID (defaults to token owner)'),
     },
   },
-  async ({ conversationId, text, userId }) => {
+  async ({ conversationId, text, filePath, userId }) => {
     try {
-      const body = { type: 'note', body: text };
+      const noteText = await resolveTextOrFile({ text, filePath, required: true });
+      const body = { type: 'note', body: noteText };
       if (userId) body.userId = userId;
       await mailbox.post(`/conversations/${conversationId}/threads/note`, body);
       return ok({ ok: true, conversationId });
